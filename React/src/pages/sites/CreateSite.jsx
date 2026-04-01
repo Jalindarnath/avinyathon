@@ -35,7 +35,8 @@ export default function CreateSite() {
         location: formData.location,
         manager: formData.manager,
         siteId: formData.siteId,
-        createdBy: user ? user.id : 'anonymous'
+        createdBy: user ? user.id : 'anonymous',
+        status: 'Active'
       };
 
       const newSite = await createSite(siteData);
