@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Compass } from 'lucide-react';
-import { updateSite } from '../../appwrite/services/site.service';
+import { Building2, Plus, Compass, Trash2 } from 'lucide-react';
+import { updateSite, deleteSite } from '../../appwrite/services/site.service';
 import { useSite } from '../context/SiteContext';
 
 export default function SiteManagement() {
@@ -24,6 +24,18 @@ export default function SiteManagement() {
       manager: site.manager || '',
       status: site.status || 'ACTIVE'
     });
+  };
+
+  const handleDeleteClick = async (site) => {
+    if (window.confirm(`Are you sure you want to delete ${site.siteName || site.name}?`)) {
+      try {
+        await deleteSite(site.$id);
+        await fetchSites(); // Refresh context
+      } catch (error) {
+        console.error("Error deleting site:", error);
+        alert("Failed to delete the site. Please try again.");
+      }
+    }
   };
 
   const handleUpdate = async (e) => {
@@ -122,12 +134,21 @@ export default function SiteManagement() {
                      <span className="text-sm font-bold text-gray-700">{site.manager || 'Unassigned'}</span>
                   </td>
                   <td className="px-6 py-6">
-                    <button 
-                      onClick={() => handleEditClick(site)}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
-                    >
-                      Edit 
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleEditClick(site)}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-200 transition-colors"
+                      >
+                        Edit 
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClick(site)}
+                        className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                        title="Delete Site"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

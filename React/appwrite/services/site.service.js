@@ -29,6 +29,15 @@ export const updateSite = async (documentId, data) => {
   );
 };
 
+// Delete Site
+export const deleteSite = async (documentId) => {
+  return databases.deleteDocument(
+    DATABASE_ID,
+    COLLECTIONS.SITES,
+    documentId
+  );
+};
+
 //  Ping Connection (Health Check)
 export const pingAppwrite = async () => {
   try {
