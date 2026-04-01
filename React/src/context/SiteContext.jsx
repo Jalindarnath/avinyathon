@@ -1,39 +1,41 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useUser } from "@clerk/clerk-react";
-import { getSites, pingAppwrite } from "../../appwrite/services/site.service";
-
-const ADMIN_EMAIL = "admin@samarthdevelopers.com";
+import { useAuth } from "./AuthContext";
+import { getSites } from "../../appwrite/services/site.service";
 
 const SiteContext = createContext();
 
 export const SiteProvider = ({ children }) => {
-  const { user, isLoaded } = useUser();
+  const { user, loading } = useAuth();
   const [selectedSite, setSelectedSite] = useState(null);
   const [sites, setSites] = useState([]);
 
-  // Derive role from the logged-in Clerk user
-  const role = user?.primaryEmailAddress?.emailAddress === ADMIN_EMAIL ? "ADMIN" : "MANAGER";
-  const userId = user?.id ?? null;
+  const role = user?.role || "manager";
+  const userId = user?.id || null;
 
   const fetchSites = useCallback(async () => {
-    // Don't fetch until Clerk has resolved the user session
-    if (!isLoaded || !userId) return;
+    if (loading || !userId) return;
 
     try {
-      await pingAppwrite();
       const response = await getSites(userId, role);
       setSites(response.documents || []);
+      
+      // If there are sites but none selected, select the first one
       if (response.documents?.length > 0 && !selectedSite) {
         setSelectedSite(response.documents[0]);
       }
     } catch (error) {
-      console.error("Error fetching sites:", error);
+      console.error("SiteContext :: fetchSites :: error", error);
     }
-  }, [isLoaded, userId, role]);
+  }, [loading, userId, role, selectedSite]);
 
   useEffect(() => {
-    fetchSites();
-  }, [fetchSites]);
+    if (userId) {
+      fetchSites();
+    } else {
+      setSites([]);
+      setSelectedSite(null);
+    }
+  }, [userId, fetchSites]);
 
   return (
     <SiteContext.Provider value={{ selectedSite, setSelectedSite, sites, setSites, fetchSites, role, userId }}>

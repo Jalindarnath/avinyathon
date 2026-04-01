@@ -12,9 +12,9 @@ export const createSite = async (data) => {
 };
 
 //  Get All Sites (RBAC enforced)
-export const getSites = async (userId, role = 'MANAGER') => {
+export const getSites = async (userId, role = 'manager') => {
   // Admin bypasses privacy filter
-  const queries = role === 'ADMIN' ? [] : [Query.equal("createdBy", userId)];
+  const queries = role === 'admin' ? [] : [Query.equal("createdBy", userId)];
   
   return databases.listDocuments(
     DATABASE_ID,

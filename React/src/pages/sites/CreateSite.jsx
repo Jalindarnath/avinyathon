@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUser } from "@clerk/clerk-react";
+import { useAuth } from '../../context/AuthContext';
 import { Building2, MapPin, Hash, ArrowLeft, User as UserIcon } from 'lucide-react';
 import { createSite } from '../../../appwrite/services/site.service';
 import { useSite } from '../../context/SiteContext';
 
 export default function CreateSite() {
-  const { user } = useUser();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { setSelectedSite, fetchSites } = useSite();
 
