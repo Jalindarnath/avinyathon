@@ -18,8 +18,9 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      // After login, the user will be redirected to dashboard because of the Route component's logic automatically or we can force navigate.
+      // Pass the selected role (Admin/Manager) to the login context
+      // Note: role is 'Admin' or 'Manager' from state, converting to lowercase for consistency
+      await login(email, password, role.toLowerCase());
       navigate('/');
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');

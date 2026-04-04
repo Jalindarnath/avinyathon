@@ -4,6 +4,7 @@ export const generateInvoiceData = ({
   type,
   referenceId,
   siteId,
+  status = "pending",
 }) => {
   return {
     title,
@@ -11,6 +12,7 @@ export const generateInvoiceData = ({
     type,
     referenceId,
     siteId,
+    status,
     date: new Date().toISOString().split("T")[0],
   };
 };

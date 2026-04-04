@@ -6,13 +6,14 @@ import { useSite } from '../context/SiteContext';
 import { getWorkersBySite } from "../../appwrite/services/worker.service.js";
 import { getEngineersBySite } from "../../appwrite/services/engineer.service.js";
 import { getFinanceBySite, createFinance } from "../../appwrite/services/finance.service.js";
+import { getInventoryBySite } from "../../appwrite/services/inventory.service.js";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const { selectedSite, sites } = useSite();
 
   const [finance, setFinance] = useState(null);
-  const [calculatedExpenses, setCalculatedExpenses] = useState({ labour: 0, engineer: 0, total: 0 });
+  const [calculatedExpenses, setCalculatedExpenses] = useState({ labour: 0, engineer: 0, material: 0, total: 0 });
   const [loadingStats, setLoadingStats] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
   const [totalWorkers, setTotalWorkers] = useState(0);
@@ -26,10 +27,11 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     setLoadingStats(true);
     try {
-      const [finRes, workersRes, engineersRes] = await Promise.all([
+      const [finRes, workersRes, engineersRes, inventoryRes] = await Promise.all([
          getFinanceBySite(selectedSite.$id),
          getWorkersBySite(selectedSite.$id),
-         getEngineersBySite(selectedSite.$id)
+         getEngineersBySite(selectedSite.$id),
+         getInventoryBySite(selectedSite.$id)
       ]);
 
       // finRes can be the object directly since getFinanceBySite does `res.documents[0]`
@@ -43,13 +45,14 @@ export default function Dashboard() {
          const pdays = parseInt(w.presentDays || "0", 10);
          return acc + (pdays * (w.dailyWage || 0));
       }, 0);
-
       const engineerCost = engineers.reduce((acc, e) => acc + (e.salary || 0), 0);
+      const materialCost = (inventoryRes?.documents || []).reduce((acc, item) => acc + (item.price || 0), 0);
       
       setCalculatedExpenses({
          labour: labourCost,
          engineer: engineerCost,
-         total: labourCost + engineerCost
+         material: materialCost,
+         total: labourCost + engineerCost + materialCost
       });
 
     } catch (e) {
@@ -72,7 +75,8 @@ export default function Dashboard() {
           manager: user?.name,
           expenses: calculatedExpenses.total,
           labourcost: calculatedExpenses.labour,
-          engineercost: calculatedExpenses.engineer,
+          engineerCost: calculatedExpenses.engineer,
+          materialCost: calculatedExpenses.material,
           remainingBudget: budgetValue - calculatedExpenses.total
        });
        setFinance(newFin);
@@ -199,6 +203,12 @@ export default function Dashboard() {
                   </span>
                   <span className="font-black text-slate-900">₹{calculatedExpenses.engineer.toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between items-center p-3 rounded-2xl bg-indigo-50/40 border border-indigo-100">
+                  <span className="flex items-center gap-3 text-sm text-slate-700 font-bold">
+                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> Material Cost
+                  </span>
+                  <span className="font-black text-slate-900">₹{calculatedExpenses.material.toLocaleString()}</span>
+                </div>
                 <div className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-200">
                   <span className="flex items-center gap-3 text-sm text-slate-700 font-bold">
                     <div className="w-2.5 h-2.5 rounded-full bg-slate-700"></div> Total Expenses
@@ -222,8 +232,13 @@ export default function Dashboard() {
             <p className="text-4xl font-black text-blue-900 tracking-tight mb-3">₹{calculatedExpenses.engineer.toLocaleString()}</p>
             <p className="text-xs text-blue-700 font-medium">Sum of all engineers' monthly salaries on this site</p>
           </div>
+          <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-7 rounded-3xl border border-indigo-200">
+             <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Material Cost</p>
+             <p className="text-4xl font-black text-indigo-900 tracking-tight mb-3">₹{calculatedExpenses.material.toLocaleString()}</p>
+             <p className="text-xs text-indigo-700 font-medium">Cumulative cost of all recorded inventory materials</p>
+          </div>
           <div className="md:col-span-2 bg-gradient-to-br from-slate-800 to-slate-900 p-7 rounded-3xl text-white">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Expense (Labour + Engineers)</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Expense (Labour + Engineers + Materials)</p>
             <p className="text-5xl font-black tracking-tighter mb-3">₹{calculatedExpenses.total.toLocaleString()}</p>
             {finance && (
               <div className="flex items-center gap-3">

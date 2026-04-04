@@ -54,6 +54,7 @@ export const updateFinance = async (docId, updatedData) => {
 export const updateMaterialExpense = async (siteId, amount) => {
   try {
     const finance = await getFinanceBySite(siteId);
+    if (!finance) return; // Cannot update if no budget/finance record exists
 
     const updated = {
       materialCost: (finance.materialCost || 0) + amount,
@@ -72,12 +73,13 @@ export const updateMaterialExpense = async (siteId, amount) => {
 export const updateLaborCost = async (siteId, amount) => {
   try {
     const finance = await getFinanceBySite(siteId);
+    if (!finance) return; // Cannot update if no budget document exists
 
+    const currentExpenses = (finance.expenses || 0) + amount;
     const updated = {
       labourcost: (finance.labourcost || 0) + amount,
-      expenses: (finance.expenses || 0) + amount,
-      remainingBudget:
-        (finance.budget || 0) - ((finance.expenses || 0) + amount),
+      expenses: currentExpenses,
+      remainingBudget: (finance.budget || 0) - currentExpenses,
     };
 
     return await updateFinance(finance.$id, updated);
@@ -90,12 +92,13 @@ export const updateLaborCost = async (siteId, amount) => {
 export const updateEngineerCost = async (siteId, amount) => {
   try {
     const finance = await getFinanceBySite(siteId);
+    if (!finance) return; 
 
+    const currentExpenses = (finance.expenses || 0) + amount;
     const updated = {
       engineerCost: (finance.engineerCost || 0) + amount,
-      expenses: (finance.expenses || 0) + amount,
-      remainingBudget:
-        (finance.budget || 0) - ((finance.expenses || 0) + amount),
+      expenses: currentExpenses,
+      remainingBudget: (finance.budget || 0) - currentExpenses,
     };
 
     return await updateFinance(finance.$id, updated);
@@ -125,8 +128,9 @@ export const deductLaborCost = async (siteId, amount) => {
 export const deductEngineerCost = async (siteId, amount) => {
   try {
     const finance = await getFinanceBySite(siteId);
+    if (!finance) return; 
     const updated = {
-      engineercost: Math.max(0, (finance.engineercost || 0) - amount),
+      engineerCost: Math.max(0, (finance.engineerCost || 0) - amount),
       expenses: Math.max(0, (finance.expenses || 0) - amount),
       remainingBudget: (finance.budget || 0) - Math.max(0, (finance.expenses || 0) - amount)
     };

@@ -93,11 +93,20 @@ const Payments = () => {
       // Update SiteFinance
       if (person._type === 'labour') {
         await updateLaborCost(selectedSite.$id, person.payableAmount);
+        // Reset worker stats for the new week
+        await updateWorker(person.$id, { 
+          presentDays: "0", 
+          deductedAmt: 0 
+        });
       } else {
         await updateEngineerCost(selectedSite.$id, person.payableAmount);
+        // Reset deductions for the new month
+        await updateEngineer(person.$id, { 
+          deductedAmt: 0 
+        });
       }
 
-      alert(`Payment of ₹${person.payableAmount} successful and SiteFinance updated.`);
+      alert(`Payment of ₹${person.payableAmount} successful. Personnel records have been reset for the next cycle.`);
       fetchData();
     } catch (error) {
       console.error("Payment failed:", error);
@@ -218,7 +227,7 @@ const Payments = () => {
                               {personnel.filter(p => p._type === 'labour').length === 0 ? (
                                  <tr><td colSpan="6" className="text-center py-10 text-slate-300 text-xs font-bold uppercase">No laborers found for this site.</td></tr>
                               ) : personnel.filter(p => p._type === 'labour').map(person => {
-                                 const canPay = isWeekend;
+                                 const canPay = isWeekend && person.presentDays > 0;
                                  return (
                                    <tr key={person.$id} className="hover:bg-slate-50/50 transition-colors group">
                                      <td className="px-6 py-5">
