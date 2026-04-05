@@ -140,6 +140,21 @@ export const deductEngineerCost = async (siteId, amount) => {
   }
 };
 
+export const deductMaterialExpense = async (siteId, amount) => {
+  try {
+    const finance = await getFinanceBySite(siteId);
+    if (!finance) return;
+    const updated = {
+      materialCost: Math.max(0, (finance.materialCost || 0) - amount),
+      expenses: Math.max(0, (finance.expenses || 0) - amount),
+      remainingBudget: (finance.budget || 0) - Math.max(0, (finance.expenses || 0) - amount)
+    };
+    return await updateFinance(finance.$id, updated);
+  } catch (error) {
+    console.error("Deduct Material Expense Error:", error);
+  }
+};
+
 export const checkBudgetAlert = (finance) => {
   const threshold = (finance.budget || 0) * 0.2;
 

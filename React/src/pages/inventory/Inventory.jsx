@@ -14,7 +14,10 @@ import {
   addInventory,
   getInventoryBySite,
 } from "../../../appwrite/services/inventory.service";
-import { updateMaterialExpense } from "../../../appwrite/services/finance.service";
+import {
+  updateMaterialExpense,
+  deductMaterialExpense,
+} from "../../../appwrite/services/finance.service";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MATERIAL_OPTIONS = [
@@ -33,6 +36,7 @@ const UNIT_OPTIONS = [
   { value: "tonnes", label: "Tonnes" },
   { value: "pieces", label: "Pieces" },
   { value: "brass", label: "Brass" },
+  { value: "kgs", label: "Kgs" }
 ];
 
 const MATERIAL_COLORS = {
@@ -74,6 +78,7 @@ const Inventory = () => {
     unit: "",
     price: "",
     supplier: "",
+    type: "incoming", // incoming or outgoing
   });
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
@@ -112,7 +117,10 @@ const Inventory = () => {
   // ── Aggregate totals per material ───────────────────────────────────────────
   const materialTotals = MATERIAL_OPTIONS.map((mat) => {
     const relevant = entries.filter((e) => e.item === mat.value);
-    const total = relevant.reduce((sum, e) => sum + (parseInt(e.quantity) || 0), 0);
+    const total = relevant.reduce((sum, e) => {
+      const q = parseInt(e.quantity) || 0;
+      return e.type === "outgoing" ? sum - q : sum + q;
+    }, 0);
     // Derive a dominant unit (last entry's unit)
     const unit = relevant.length > 0 ? relevant[0].unit : null;
     return { ...mat, total, unit, count: relevant.length };
@@ -150,6 +158,7 @@ const Inventory = () => {
         siteId: selectedSite.$id,
         item: form.item,
         quantity: parseInt(form.quantity),
+        type: form.type,
         unit: form.unit,
         price: form.price ? parseInt(form.price) : null,
         supplier: form.supplier.trim() || null,
@@ -160,11 +169,15 @@ const Inventory = () => {
       
       // Update SiteFinance expenses if price is provided
       if (payload.price) {
-        await updateMaterialExpense(selectedSite.$id, payload.price);
+        if (payload.type === "outgoing") {
+          await deductMaterialExpense(selectedSite.$id, payload.price);
+        } else {
+          await updateMaterialExpense(selectedSite.$id, payload.price);
+        }
       }
 
-      setSuccessMsg(`✓ ${getMaterialInfo(form.item).label} entry recorded successfully!`);
-      setForm({ item: "", quantity: "", unit: "", price: "", supplier: "" });
+      setSuccessMsg(`✓ ${getMaterialInfo(form.item).label} ${form.type === 'outgoing' ? 'return' : 'entry'} recorded successfully!`);
+      setForm({ item: "", quantity: "", unit: "", price: "", supplier: "", type: "incoming" });
       await fetchInventory();
     } catch (err) {
       console.error("Inventory add failed:", err);
@@ -245,12 +258,34 @@ const Inventory = () => {
               {/* ── Entry Form ──────────────────────────────────────────────── */}
               <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
                 <h3 className="text-xl font-black text-slate-900 mb-1 flex items-center gap-2">
-                  <Plus size={20} className="text-orange-700" />
-                  Record Incoming Material
+                  <Plus size={20} className={form.type === "outgoing" ? "text-red-700" : "text-orange-700"} />
+                  {form.type === "outgoing" ? "Send Material Back" : "Record Incoming Material"}
                 </h3>
                 <p className="text-xs font-medium text-slate-400 mb-8">
-                  Log materials entering the site
+                  {form.type === "outgoing" ? "Log materials leaving the site" : "Log materials entering the site"}
                 </p>
+
+                {/* Type Toggle */}
+                <div className="flex bg-slate-100 p-1 rounded-2xl mb-6">
+                  <button
+                    type="button"
+                    onClick={() => handleChange("type", "incoming")}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      form.type === "incoming" ? "bg-white text-orange-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    Delivery (In)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChange("type", "outgoing")}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                      form.type === "outgoing" ? "bg-white text-red-700 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    Send Back (Out)
+                  </button>
+                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   {/* Material */}
@@ -369,8 +404,8 @@ const Inventory = () => {
                       </>
                     ) : (
                       <>
-                        <BoxSelect size={14} />
-                        Record Entry
+                        {form.type === "outgoing" ? <TrendingUp size={14} className="rotate-180" /> : <BoxSelect size={14} />}
+                        {form.type === "outgoing" ? "Confirm Return" : "Record Entry"}
                       </>
                     )}
                   </button>
@@ -383,10 +418,10 @@ const Inventory = () => {
                   <ClipboardList size={18} className="text-slate-400" />
                   <div>
                     <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">
-                      Recent Deliveries
+                      Recent Transactions
                     </h3>
                     <p className="text-[10px] font-bold text-slate-400 mt-0.5">
-                      Latest material arrivals at site
+                      Latest material movements at site
                     </p>
                   </div>
                 </div>
@@ -437,7 +472,10 @@ const Inventory = () => {
                                 </div>
                               </td>
                               <td className="px-6 py-4 text-right font-black text-slate-900 text-sm">
-                                {parseInt(entry.quantity).toLocaleString()}
+                                <span className={entry.type === "outgoing" ? "text-red-600" : ""}>
+                                  {entry.type === "outgoing" ? "-" : "+"}
+                                  {parseInt(entry.quantity).toLocaleString()}
+                                </span>
                               </td>
                               <td className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">
                                 {getUnitLabel(entry.unit)}

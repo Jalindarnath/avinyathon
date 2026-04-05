@@ -16,6 +16,7 @@ import Attendance from "../pages/attendance/Attendance.jsx";
 import Payments from "../pages/payments/Payments.jsx";
 import Inventory from "../pages/inventory/Inventory.jsx";
 import Invoices from "../pages/invoices/Invoices.jsx";
+import Reports from "../pages/reports/Reports.jsx";
 
 const ProtectedLayout = () => {
   return (
@@ -79,6 +80,7 @@ function AppRoutes() {
           <Route path="payments" element={<Payments />} />
           <Route path="inventory" element={<Inventory />} />
           <Route path="invoices" element={<Invoices />} />
+          <Route path="reports" element={<Reports />} />
           <Route path="create-manager" element={<CreateManager />} />
         </Route>
 
