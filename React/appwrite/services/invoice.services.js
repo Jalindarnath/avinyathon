@@ -51,3 +51,6 @@ export const deleteInvoice = async (documentId) => {
 export const getFilePreview = (fileId) => {
   return storage.getFileView(BUCKET_ID, fileId);
 };
+export const getAllInvoices = async () => {
+    return databases.listDocuments(DATABASE_ID, COLLECTIONS.INVOICES, [Query.limit(100), Query.orderDesc($createdAt)]);
+};

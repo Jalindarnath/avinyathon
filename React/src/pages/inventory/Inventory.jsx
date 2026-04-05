@@ -70,6 +70,7 @@ const formatDate = (dateStr) => {
 const Inventory = () => {
   const { selectedSite } = useSite();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   // Form state
   const [form, setForm] = useState({
@@ -254,9 +255,9 @@ const Inventory = () => {
 
             {/* ── Main Content Grid  ─────────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-
               {/* ── Entry Form ──────────────────────────────────────────────── */}
-              <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
+              {!isAdmin && (
+                <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
                 <h3 className="text-xl font-black text-slate-900 mb-1 flex items-center gap-2">
                   <Plus size={20} className={form.type === "outgoing" ? "text-red-700" : "text-orange-700"} />
                   {form.type === "outgoing" ? "Send Material Back" : "Record Incoming Material"}
@@ -410,10 +411,11 @@ const Inventory = () => {
                     )}
                   </button>
                 </form>
-              </div>
+                </div>
+              )}
 
               {/* ── Recent Entries Table ──────────────────────────────────────── */}
-              <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className={`${isAdmin ? 'lg:col-span-5' : 'lg:col-span-3'} bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden`}>
                 <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3">
                   <ClipboardList size={18} className="text-slate-400" />
                   <div>

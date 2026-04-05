@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { UserPlus, Pencil, Trash2, Users, X, Loader2 } from 'lucide-react';
-import { addWorker, getWorkersBySite, updateWorker, deleteWorker } from "../../../appwrite/services/worker.service.js";
+import { useState, useEffect } from 'react';
+import { UserPlus, Pencil, Trash2, Users, X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { addWorker, getWorkersBySite, updateWorker, deleteWorker, getPaginatedWorkers } from "../../../appwrite/services/worker.service.js";
 import { createPayment } from "../../../appwrite/services/payment.service.js";
 import { updateLaborCost } from "../../../appwrite/services/finance.service.js";
 import { useSite } from "../../context/SiteContext";
@@ -9,11 +9,17 @@ import { useAuth } from "../../context/AuthContext";
 const Workers = () => {
   const { selectedSite } = useSite();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const [workers, setWorkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
+
   const [formData, setFormData] = useState({
     name: "",
     role: "",
@@ -27,18 +33,27 @@ const Workers = () => {
 
   useEffect(() => {
     fetchWorkers();
-  }, [selectedSite]);
+  }, [selectedSite, page]);
 
   const fetchWorkers = async () => {
-    if (!selectedSite) {
-      setWorkers([]);
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
-      const res = await getWorkersBySite(selectedSite.$id);
-      setWorkers(res.documents || []);
+      if (isAdmin) {
+         // Global view for admin
+         const offset = (page - 1) * limit;
+         const res = await getPaginatedWorkers(limit, offset);
+         setWorkers(res.documents || []);
+         setTotal(res.total);
+      } else {
+         if (!selectedSite) {
+           setWorkers([]);
+           setLoading(false);
+           return;
+         }
+         const res = await getWorkersBySite(selectedSite.$id);
+         setWorkers(res.documents || []);
+         setTotal(res.documents.length);
+      }
     } catch (err) {
       console.error("Failed to fetch workers:", err);
     } finally {
@@ -163,15 +178,17 @@ const Workers = () => {
                 <div className="p-2 bg-orange-100 rounded-2xl">
                    <Users className="text-orange-800" size={24} />
                 </div>
-                Laborers Directory
+                {isAdmin ? 'Global Laborers Directory' : 'Site Laborers Directory'}
               </h3>
-              <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-tighter">Maintain records for your site workforce.</p>
+              <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-tighter">
+                {isAdmin ? `Managing ${total} workers across all construction sites.` : 'Maintain records for your site workforce.'}
+              </p>
             </div>
             <div className="flex gap-4">
               <div className="flex items-center text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
-                {selectedSite ? (selectedSite.siteName || selectedSite.name || 'Unnamed Site') : 'No Site Selected'}
+                {isAdmin ? 'All Sites (Global)' : (selectedSite ? (selectedSite.siteName || selectedSite.name) : 'No Site Selected')}
               </div>
-              {selectedSite && (
+              {!isAdmin && selectedSite && (
                 <button 
                   onClick={() => setShowModal(true)}
                   className="bg-orange-800 text-white px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-black shadow-xl shadow-orange-900/10 hover:bg-orange-950 transition-all active:scale-95"
@@ -197,16 +214,19 @@ const Workers = () => {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
-                  <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-300 font-black animate-pulse">Synchronizing Site Records...</td></tr>
+                  <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-300 font-black flex items-center justify-center gap-3">
+                    <Loader2 className="animate-spin text-orange-800" size={20} />
+                    Synchronizing Records...
+                  </td></tr>
                 ) : workers.length === 0 ? (
-                  <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-300 font-black uppercase tracking-widest">No Laborers found for this site.</td></tr>
+                  <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-300 font-black uppercase tracking-widest">No Laborers found.</td></tr>
                 ) : (
                   workers.map((person) => (
                     <tr key={person.$id} className="group hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-800 font-black text-xs shadow-sm">
-                            {person.name.substring(0, 2).toUpperCase()}
+                            {person.name?.substring(0, 2).toUpperCase() || '??'}
                           </div>
                           <div>
                             <p className="font-black text-slate-900">{person.name}</p>
@@ -225,17 +245,19 @@ const Workers = () => {
                       <td className="px-6 py-5 text-sm text-emerald-700 font-black">₹{person.dailyWage}</td>
                       <td className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{person.manager || 'Unassigned'}</td>
                       <td className="px-6 py-5 text-right flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => handlePay(person)}
-                          disabled={!isWeekend || parseInt(person.presentDays) === 0 || processingPay === person.$id}
-                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                            isWeekend && parseInt(person.presentDays) > 0 
-                              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/10 hover:bg-emerald-700' 
-                              : 'bg-slate-100 text-slate-300 cursor-not-allowed'
-                          }`}
-                        >
-                          {processingPay === person.$id ? '...' : (isWeekend ? 'Cash Out' : 'Weekend Only')}
-                        </button>
+                        {!isAdmin && (
+                          <button
+                            onClick={() => handlePay(person)}
+                            disabled={!isWeekend || parseInt(person.presentDays) === 0 || processingPay === person.$id}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                              isWeekend && parseInt(person.presentDays) > 0 
+                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/10 hover:bg-emerald-700' 
+                                : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                            }`}
+                          >
+                            {processingPay === person.$id ? '...' : (isWeekend ? 'Cash Out' : 'Weekend Only')}
+                          </button>
+                        )}
                         <div className="flex items-center gap-1">
                           <button 
                             onClick={() => handleEdit(person)}
@@ -257,6 +279,34 @@ const Workers = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {isAdmin && total > limit && (
+            <div className="p-6 border-t border-slate-50 flex items-center justify-between bg-slate-50/30">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, total)} of {total} personnel
+              </p>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                  disabled={page === 1}
+                  className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-white hover:text-orange-800 disabled:opacity-30 transition-all shadow-sm"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <div className="flex items-center px-4 text-xs font-black text-slate-900">
+                  Page {page}
+                </div>
+                <button 
+                  onClick={() => setPage(prev => prev + 1)}
+                  disabled={page * limit >= total}
+                  className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-white hover:text-orange-800 disabled:opacity-30 transition-all shadow-sm"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

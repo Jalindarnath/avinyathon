@@ -177,7 +177,7 @@ export default function Reports() {
   const totalExpenses = finance?.expenses || 0;
   const remainingBudget = finance?.remainingBudget || 0;
   const labourCost = finance?.labourcost || 0;
-  const engineerCost = finance?.engineerCost || 0;
+  const engineerCost = finance?.engineercost || 0;
   const materialCost = finance?.materialCost || 0;
   const budgetUtilPct = totalBudget > 0 ? Math.round((totalExpenses / totalBudget) * 100) : 0;
 

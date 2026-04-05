@@ -96,7 +96,7 @@ export const updateEngineerCost = async (siteId, amount) => {
 
     const currentExpenses = (finance.expenses || 0) + amount;
     const updated = {
-      engineerCost: (finance.engineerCost || 0) + amount,
+      engineercost: (finance.engineercost || 0) + amount,
       expenses: currentExpenses,
       remainingBudget: (finance.budget || 0) - currentExpenses,
     };
@@ -130,7 +130,7 @@ export const deductEngineerCost = async (siteId, amount) => {
     const finance = await getFinanceBySite(siteId);
     if (!finance) return; 
     const updated = {
-      engineerCost: Math.max(0, (finance.engineerCost || 0) - amount),
+      engineercost: Math.max(0, (finance.engineercost || 0) - amount),
       expenses: Math.max(0, (finance.expenses || 0) - amount),
       remainingBudget: (finance.budget || 0) - Math.max(0, (finance.expenses || 0) - amount)
     };
@@ -164,3 +164,67 @@ export const checkBudgetAlert = (finance) => {
 
   return "Budget OK";
 };
+
+export const getAllFinance = async () => {
+  try {
+    const res = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.SITE_FINANCE,
+      []
+    );
+    return res.documents;
+  } catch (error) {
+    console.error("Get All Finance Error:", error);
+    return [];
+  }
+};
+
+/* =======================================================
+   💰 ALLOCATE/UPDATE BUDGET (Admin)
+======================================================= */
+export const allocateBudget = async (siteId, amount) => {
+    try {
+      const existing = await getFinanceBySite(siteId);
+      if (existing) {
+        return await updateFinance(existing.$id, {
+          budget: amount,
+          remainingBudget: amount - (existing.expenses || 0)
+        });
+      } else {
+        return await createFinance({
+          siteId,
+          budget: amount,
+          expenses: 0,
+          remainingBudget: amount,
+          currency: 'INR',
+          labourcost: 0,
+          engineercost: 0,
+          materialCost: 0
+        });
+      }
+    } catch (error) {
+      console.error("Allocate Budget Error:", error);
+      throw error;
+    }
+  };
+
+export const addAdditionalBudget = async (siteId, additionalAmount) => {
+    try {
+      const existing = await getFinanceBySite(siteId);
+      if (existing) {
+        const newBudget = Math.max(0, (existing.budget || 0) + additionalAmount);
+        return await updateFinance(existing.$id, {
+          budget: newBudget,
+          remainingBudget: newBudget - (existing.expenses || 0)
+        });
+      } else {
+        // If it's a new site, ensure we don't start with negative
+        return await allocateBudget(siteId, Math.max(0, additionalAmount));
+      }
+    } catch (error) {
+      console.error("Add Additional Budget Error:", error);
+      throw error;
+    }
+  };
+
+

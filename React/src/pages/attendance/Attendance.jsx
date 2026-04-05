@@ -4,11 +4,12 @@ import { useSite } from "../../context/SiteContext";
 import { useAuth } from "../../context/AuthContext";
 import { getWorkersBySite, updateWorker } from "../../../appwrite/services/worker.service.js";
 import { getEngineersBySite, updateEngineer } from "../../../appwrite/services/engineer.service.js";
-import { addAttendance, updateAttendance, getAttendanceBySiteAndDate } from "../../../appwrite/services/attendance.service.js";
+import { addAttendance, updateAttendance, getAttendanceBySiteAndDate, getAttendanceBySite } from "../../../appwrite/services/attendance.service.js";
 
 const Attendance = () => {
-  const { selectedSite } = useSite();
+  const { selectedSite, sites } = useSite();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   
   const [personnel, setPersonnel] = useState([]);
   const [dbRecords, setDbRecords] = useState({}); // mapped by personId for finalized records
@@ -17,6 +18,10 @@ const Attendance = () => {
   const [submitting, setSubmitting] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   
+  // Admin Global Stats
+  const [globalStats, setGlobalStats] = useState([]);
+  const [loadingGlobal, setLoadingGlobal] = useState(false);
+  
   // Get today's local date string YYYY-MM-DD
   const todayObj = new Date();
   const today = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
@@ -24,6 +29,34 @@ const Attendance = () => {
   useEffect(() => {
     fetchData();
   }, [selectedSite]);
+
+  useEffect(() => {
+    if (isAdmin && sites.length > 0) {
+      fetchGlobalStats();
+    }
+  }, [isAdmin, sites]);
+
+  const fetchGlobalStats = async () => {
+    setLoadingGlobal(true);
+    try {
+      const stats = await Promise.all(sites.map(async (site) => {
+        const res = await getAttendanceBySite(site.$id);
+        const presentRecords = res.documents.filter(r => r.status === 'present').length;
+        const totalRecords = res.documents.length;
+        return {
+          id: site.$id,
+          name: site.siteName || site.name,
+          percentage: totalRecords > 0 ? ((presentRecords / totalRecords) * 100).toFixed(1) : "0",
+          total: totalRecords
+        };
+      }));
+      setGlobalStats(stats);
+    } catch (e) {
+      console.error("Global stats error:", e);
+    } finally {
+      setLoadingGlobal(false);
+    }
+  };
 
   const fetchData = async () => {
     if (!selectedSite) {
@@ -145,6 +178,42 @@ const Attendance = () => {
 
   return (
     <div className="flex-1 ml-64 bg-slate-50 min-h-screen p-8">
+      {/* Admin Global Summary */}
+      {isAdmin && globalStats.length > 0 && (
+        <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+           <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-orange-800 rounded-xl shadow-lg shadow-orange-900/20">
+                 <Clock className="text-white" size={20} />
+              </div>
+              <h4 className="text-xl font-black text-gray-900 tracking-tight">Portfolio Attendance Index</h4>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {globalStats.map(stat => (
+                <div key={stat.id} className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-orange-900/5 transition-all group overflow-hidden relative">
+                   <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-full -mr-12 -mt-12 opacity-50 group-hover:scale-150 transition-transform duration-700" />
+                   
+                   <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-3 relative z-10">{stat.name}</p>
+                   <div className="flex items-baseline gap-1 relative z-10">
+                      <h5 className="text-4xl font-black text-gray-900 tracking-tighter">{stat.percentage}</h5>
+                      <span className="text-sm font-black text-orange-800">%</span>
+                   </div>
+                   
+                   <div className="mt-6">
+                      <div className="w-full bg-gray-50 h-2 rounded-full overflow-hidden border border-gray-100">
+                         <div 
+                           className="bg-gradient-to-r from-orange-400 to-orange-800 h-full rounded-full transition-all duration-1000 ease-out" 
+                           style={{ width: `${stat.percentage}%` }}
+                         />
+                      </div>
+                      <p className="text-[10px] text-gray-400 font-bold mt-3 uppercase tracking-widest">{stat.total} RECORDS MARKED</p>
+                   </div>
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-gray-50 shadow-sm overflow-hidden relative">
         <div className="p-8">
           <div className="flex justify-between items-start mb-8">

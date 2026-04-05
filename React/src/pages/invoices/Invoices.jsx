@@ -27,7 +27,8 @@ import {
   uploadInvoiceFile, 
   getFilePreview,
   updateInvoice,
-  deleteInvoice
+  deleteInvoice,
+  getAllInvoices
 } from "../../../appwrite/services/invoice.services";
 
 const UNIT_OPTIONS = [
@@ -46,6 +47,7 @@ const STATUS_OPTIONS = [
 export default function Invoices() {
   const { selectedSite } = useSite();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,14 +74,14 @@ export default function Invoices() {
   }, [selectedSite]);
 
   const fetchInvoices = async () => {
-    if (!selectedSite) {
+    if (!selectedSite && !isAdmin) {
       setInvoices([]);
       setLoading(false);
       return;
     }
     setLoading(true);
     try {
-      const res = await getInvoicesBySite(selectedSite.$id);
+      const res = isAdmin && !selectedSite ? await getAllInvoices() : await getInvoicesBySite(selectedSite.$id);
       const sorted = (res.documents || []).sort((a, b) => new Date(b.date) - new Date(a.date));
       setInvoices(sorted);
     } catch (err) {
@@ -201,14 +203,16 @@ export default function Invoices() {
               Manage procurement records and payment statuses.
             </p>
           </div>
-          <button 
-            onClick={() => showForm ? resetForm() : setShowForm(true)}
-            className={`px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-black transition-all shadow-xl active:scale-95 ${
-              showForm ? 'bg-slate-200 text-slate-600' : 'bg-indigo-600 text-white shadow-indigo-900/10 hover:bg-indigo-700'
-            }`}
-          >
-            {showForm ? 'Cancel' : <><Plus size={18} /> New Invoice</>}
-          </button>
+          {!isAdmin && (
+            <button 
+              onClick={() => showForm ? resetForm() : setShowForm(true)}
+              className={`px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-black transition-all shadow-xl active:scale-95 ${
+                showForm ? 'bg-slate-200 text-slate-600' : 'bg-indigo-600 text-white shadow-indigo-900/10 hover:bg-indigo-700'
+              }`}
+            >
+              {showForm ? 'Cancel' : <><Plus size={18} /> New Invoice</>}
+            </button>
+          )}
         </div>
 
         {/* Form Section */}
@@ -400,7 +404,7 @@ export default function Invoices() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {!selectedSite ? (
+                {!selectedSite && !isAdmin ? (
                   <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-300 font-black uppercase tracking-widest">Select a Site to View Records</td></tr>
                 ) : loading ? (
                   <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-300 font-black animate-pulse uppercase tracking-widest">Accessing Encrypted Records...</td></tr>
@@ -413,7 +417,7 @@ export default function Invoices() {
                          <div className="font-bold text-slate-900 text-sm">
                            {new Date(inv.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                          </div>
-                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">By: {inv.manager}</div>
+                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">By: {inv.manager} {isAdmin && !selectedSite && <span className="text-indigo-700">(@ {inv.siteId?.substring(0,8)})</span>}</div>
                       </td>
                       <td className="px-6 py-5">
                          <div className="font-black text-slate-900 uppercase text-xs truncate max-w-[150px]">{inv.vendorName}</div>

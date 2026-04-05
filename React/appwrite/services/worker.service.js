@@ -38,3 +38,26 @@ export const deleteWorker = async (documentId) => {
     documentId
   );
 };
+
+// Get All Workers (RBAC admin)
+export const getAllWorkers = async () => {
+    return await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.WORKERS,
+      []
+    );
+};
+
+// Paginated Workers (Admin Global)
+export const getPaginatedWorkers = async (limit = 10, offset = 0) => {
+    return await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.WORKERS,
+      [
+        Query.limit(limit),
+        Query.offset(offset),
+        Query.orderDesc("$createdAt")
+      ]
+    );
+};
+

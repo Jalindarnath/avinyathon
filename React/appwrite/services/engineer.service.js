@@ -38,3 +38,26 @@ export const deleteEngineer = async (documentId) => {
     documentId
   );
 };
+
+// Get All Engineers (RBAC admin)
+export const getAllEngineers = async () => {
+    return await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.ENGINEERS,
+      []
+    );
+};
+
+// Paginated Engineers (Admin Global)
+export const getPaginatedEngineers = async (limit = 10, offset = 0) => {
+    return await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.ENGINEERS,
+      [
+        Query.limit(limit),
+        Query.offset(offset),
+        Query.orderDesc("$createdAt")
+      ]
+    );
+};
+

@@ -4,13 +4,16 @@ import { useSite } from "../../context/SiteContext";
 import { useAuth } from "../../context/AuthContext";
 import { getWorkersBySite, updateWorker } from "../../../appwrite/services/worker.service.js";
 import { getEngineersBySite, updateEngineer } from "../../../appwrite/services/engineer.service.js";
-import { createPayment } from "../../../appwrite/services/payment.service.js";
+import { createPayment, getAllPayments, getPaymentsBySite } from "../../../appwrite/services/payment.service.js";
 import { updateLaborCost, updateEngineerCost, deductLaborCost, deductEngineerCost } from "../../../appwrite/services/finance.service.js";
+import { getAllWorkers } from "../../../appwrite/services/worker.service.js";
+import { getAllEngineers } from "../../../appwrite/services/engineer.service.js";
 
 const Payments = () => {
   const { selectedSite } = useSite();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('payouts');
+  const isAdmin = user?.role === 'admin';
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'history' : 'payouts');
   const [personnel, setPersonnel] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
@@ -19,6 +22,9 @@ const Payments = () => {
   const [deductionTarget, setDeductionTarget] = useState("");
   const [deductionAmount, setDeductionAmount] = useState("");
   const [deductionReason, setDeductionReason] = useState("");
+  
+  // History states
+  const [paymentHistory, setPaymentHistory] = useState([]);
 
   const today = new Date();
   const isEndOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() === today.getDate();
@@ -29,7 +35,7 @@ const Payments = () => {
   }, [selectedSite]);
 
   const fetchData = async () => {
-    if (!selectedSite) {
+    if (!selectedSite && !isAdmin) {
       setPersonnel([]);
       setLoading(false);
       return;
@@ -37,8 +43,8 @@ const Payments = () => {
     setLoading(true);
     try {
       const [workersRes, engineersRes] = await Promise.all([
-        getWorkersBySite(selectedSite.$id),
-        getEngineersBySite(selectedSite.$id)
+        (isAdmin && !selectedSite) ? getAllWorkers() : getWorkersBySite(selectedSite?.$id),
+        (isAdmin && !selectedSite) ? getAllEngineers() : getEngineersBySite(selectedSite?.$id)
       ]);
 
       const workers = (workersRes.documents || []).map(w => {
@@ -69,6 +75,15 @@ const Payments = () => {
       });
 
       setPersonnel([...engineers, ...workers]);
+
+      // Fetch history if admin or someone wants to see it
+      if (isAdmin) {
+         const histRes = await getAllPayments();
+         setPaymentHistory(histRes.documents || []);
+      } else if (selectedSite) {
+         const histRes = await getPaymentsBySite(selectedSite.$id);
+         setPaymentHistory(histRes.documents || []);
+      }
     } catch (err) {
       console.error("Failed to fetch payment data:", err);
     } finally {
@@ -79,10 +94,12 @@ const Payments = () => {
   const handlePay = async (person) => {
     if (!window.confirm(`Issue payout of ₹${person.payableAmount} to ${person.name}?`)) return;
     setProcessing(person.$id);
+    const siteIdToUse = person.siteId || selectedSite.$id;
     try {
       const paymentData = {
-        siteId: selectedSite.$id,
+        siteId: siteIdToUse,
         personId: person.$id,
+        personName: person.name,
         amount: person.payableAmount,
         type: person._type,
         manager: user?.name || "Manager",
@@ -92,14 +109,14 @@ const Payments = () => {
       
       // Update SiteFinance
       if (person._type === 'labour') {
-        await updateLaborCost(selectedSite.$id, person.payableAmount);
+        await updateLaborCost(siteIdToUse, person.payableAmount);
         // Reset worker stats for the new week
         await updateWorker(person.$id, { 
           presentDays: "0", 
           deductedAmt: 0 
         });
       } else {
-        await updateEngineerCost(selectedSite.$id, person.payableAmount);
+        await updateEngineerCost(siteIdToUse, person.payableAmount);
         // Reset deductions for the new month
         await updateEngineer(person.$id, { 
           deductedAmt: 0 
@@ -129,16 +146,17 @@ const Payments = () => {
     if (!window.confirm(`Deduct ₹${deductionAmount} from ${person.name}? This will update their records.`)) return;
 
     setProcessing("deduction");
+    const siteIdToUse = person.siteId || selectedSite.$id;
     try {
        const amount = Number(deductionAmount);
        const newDeductionTotal = (person.deductedAmt || 0) + amount;
        
        if (person._type === 'labour') {
           await updateWorker(person.$id, { deductedAmt: newDeductionTotal });
-          await deductLaborCost(selectedSite.$id, amount);
+          await deductLaborCost(siteIdToUse, amount);
        } else {
           await updateEngineer(person.$id, { deductedAmt: newDeductionTotal });
-          await deductEngineerCost(selectedSite.$id, amount);
+          await deductEngineerCost(siteIdToUse, amount);
        }
 
        alert(`Deduction of ₹${amount} successful. Worker record and SiteFinance updated.`);
@@ -183,22 +201,32 @@ const Payments = () => {
             </div>
           </div>
 
-          <div className="flex gap-2 mb-8 bg-slate-50 p-1.5 rounded-2xl w-fit border border-slate-100">
+                <div className="flex gap-2 mb-8 bg-slate-50 p-1.5 rounded-2xl w-fit border border-slate-100">
+            {!isAdmin && (
+              <>
+                <button 
+                  onClick={() => setActiveTab('payouts')}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'payouts' ? 'bg-white text-orange-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  Issue Payouts
+                </button>
+                <button 
+                  onClick={() => setActiveTab('deductions')}
+                  className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'deductions' ? 'bg-white text-red-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  Deductions
+                </button>
+              </>
+            )}
             <button 
-              onClick={() => setActiveTab('payouts')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'payouts' ? 'bg-white text-orange-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              onClick={() => setActiveTab('history')}
+              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'history' ? 'bg-white text-indigo-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              Issue Payouts
-            </button>
-            <button 
-              onClick={() => setActiveTab('deductions')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'deductions' ? 'bg-white text-red-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-            >
-              Deductions
+              <div className="flex items-center gap-2 font-black uppercase"><History size={14}/> {isAdmin ? 'Global History' : 'Site History'}</div>
             </button>
           </div>
 
-          {!selectedSite ? (
+          {!selectedSite && !isAdmin ? (
              <div className="text-center py-20 text-slate-300 font-black uppercase tracking-widest">Select a site to manage payroll</div>
           ) : loading ? (
              <div className="text-center py-20 text-slate-300 font-black animate-pulse">Loading Workforce Data...</div>
@@ -232,7 +260,9 @@ const Payments = () => {
                                    <tr key={person.$id} className="hover:bg-slate-50/50 transition-colors group">
                                      <td className="px-6 py-5">
                                         <div className="font-bold text-slate-900">{person.name}</div>
-                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{person.role}</div>
+                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                                          {person.role} {isAdmin && !selectedSite && <span className="text-orange-800 ml-1">(@ {person.siteId?.substring(0,8)})</span>}
+                                        </div>
                                      </td>
                                      <td className="px-6 py-5 text-center">
                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase ${person.presentDays >= 7 ? 'text-emerald-700 bg-emerald-50 border border-emerald-100' : 'text-orange-700 bg-orange-50 border border-orange-100'}`}>
@@ -286,7 +316,9 @@ const Payments = () => {
                                    <tr key={person.$id} className="hover:bg-slate-50/50 transition-colors">
                                      <td className="px-6 py-5">
                                         <div className="font-bold text-slate-900">{person.name}</div>
-                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{person.specialization || person.role || 'General'}</div>
+                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                                          {person.specialization || person.role || 'General'} {isAdmin && !selectedSite && <span className="text-orange-800 ml-1">(@ {person.siteId?.substring(0,8)})</span>}
+                                        </div>
                                      </td>
                                      <td className="px-6 py-5 text-sm font-bold text-slate-600 text-right">₹{person.salary.toLocaleString()}</td>
                                      <td className="px-6 py-5 text-sm font-bold text-red-500 text-right">-₹{person.deductions.toLocaleString()}</td>
@@ -310,8 +342,10 @@ const Payments = () => {
                        </div>
                     </div>
                   </>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+                 ) : activeTab === 'deductions' ? (
+                   // ... (Rest of deduction UI is kept, I need to wrap it better)
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+                     {/* ... (Existing deduction form UI content starts here) */}
                      <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100">
                         <h4 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
                            <MinusCircle className="text-red-600" /> New Deduction
@@ -386,7 +420,47 @@ const Payments = () => {
                            </div>
                         </div>
                      </div>
-                  </div>
+                   </div>
+                ) : (
+                   <div className="animate-in fade-in duration-500">
+                      <div className="overflow-x-auto rounded-3xl border border-slate-100">
+                         <table className="w-full text-left">
+                            <thead className="bg-slate-50/50 text-[10px] uppercase tracking-widest text-slate-400 font-black">
+                               <tr>
+                                  <th className="px-6 py-5">Payout To</th>
+                                  <th className="px-6 py-5">Project Site</th>
+                                  <th className="px-6 py-5">Type</th>
+                                  <th className="px-6 py-5 text-right">Amount (₹)</th>
+                                  <th className="px-6 py-5 text-right">Authorized By</th>
+                                  <th className="px-6 py-5 text-right">Timestamp</th>
+                               </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                               {paymentHistory.length === 0 ? (
+                                  <tr><td colSpan="6" className="text-center py-10 text-slate-300 font-bold uppercase tracking-widest">No payout history available.</td></tr>
+                               ) : paymentHistory.map(pay => (
+                                  <tr key={pay.$id} className="hover:bg-slate-50/50 transition-colors">
+                                     <td className="px-6 py-5">
+                                        <p className="font-bold text-slate-900">{pay.personName || pay.personId.substring(0,8)}</p>
+                                        <p className="text-[10px] text-slate-400 font-black">{pay.$id}</p>
+                                     </td>
+                                     <td className="px-6 py-5">
+                                        <span className="text-[10px] font-black uppercase text-indigo-700 px-2 py-1 bg-indigo-50 border border-indigo-100 rounded-lg">{pay.siteId?.substring(0,8)}</span>
+                                     </td>
+                                     <td className="px-6 py-5">
+                                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${pay.type === 'labour' ? 'text-orange-700 bg-orange-50 border border-orange-100' : 'text-slate-800 bg-slate-100 border border-slate-200'}`}>
+                                           {pay.type}
+                                        </span>
+                                     </td>
+                                     <td className="px-6 py-5 text-sm font-black text-slate-900 text-right">₹{pay.amount?.toLocaleString()}</td>
+                                     <td className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">{pay.manager || 'Admin'}</td>
+                                     <td className="px-6 py-5 text-[10px] font-bold text-slate-400 text-right">{new Date(pay.$createdAt).toLocaleString()}</td>
+                                  </tr>
+                               ))}
+                            </tbody>
+                         </table>
+                      </div>
+                   </div>
                 )}
              </div>
           )}
