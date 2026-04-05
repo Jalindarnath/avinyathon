@@ -24,8 +24,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, expectedRole) => {
     const res = await loginService.login(email, password);
+    
+    // Check if the actual user role matches what was selected on the login page
+    if (res.role !== expectedRole) {
+      await loginService.logout();
+      setUser(null);
+      throw new Error(`Unauthorized access!`);
+    }
+
     setUser(res);
     return res;
   };

@@ -6,13 +6,14 @@ import { useSite } from '../context/SiteContext';
 import { getWorkersBySite } from "../../appwrite/services/worker.service.js";
 import { getEngineersBySite } from "../../appwrite/services/engineer.service.js";
 import { getFinanceBySite, createFinance } from "../../appwrite/services/finance.service.js";
+import { getInventoryBySite } from "../../appwrite/services/inventory.service.js";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const { selectedSite, sites } = useSite();
 
   const [finance, setFinance] = useState(null);
-  const [calculatedExpenses, setCalculatedExpenses] = useState({ labour: 0, engineer: 0, total: 0 });
+  const [calculatedExpenses, setCalculatedExpenses] = useState({ labour: 0, engineer: 0, material: 0, total: 0 });
   const [loadingStats, setLoadingStats] = useState(false);
   const [budgetInput, setBudgetInput] = useState('');
   const [totalWorkers, setTotalWorkers] = useState(0);
@@ -26,10 +27,11 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     setLoadingStats(true);
     try {
-      const [finRes, workersRes, engineersRes] = await Promise.all([
+      const [finRes, workersRes, engineersRes, inventoryRes] = await Promise.all([
          getFinanceBySite(selectedSite.$id),
          getWorkersBySite(selectedSite.$id),
-         getEngineersBySite(selectedSite.$id)
+         getEngineersBySite(selectedSite.$id),
+         getInventoryBySite(selectedSite.$id)
       ]);
 
       // finRes can be the object directly since getFinanceBySite does `res.documents[0]`
@@ -43,13 +45,14 @@ export default function Dashboard() {
          const pdays = parseInt(w.presentDays || "0", 10);
          return acc + (pdays * (w.dailyWage || 0));
       }, 0);
-
       const engineerCost = engineers.reduce((acc, e) => acc + (e.salary || 0), 0);
+      const materialCost = (inventoryRes?.documents || []).reduce((acc, item) => acc + (item.price || 0), 0);
       
       setCalculatedExpenses({
          labour: labourCost,
          engineer: engineerCost,
-         total: labourCost + engineerCost
+         material: materialCost,
+         total: labourCost + engineerCost + materialCost
       });
 
     } catch (e) {
@@ -72,7 +75,8 @@ export default function Dashboard() {
           manager: user?.name,
           expenses: calculatedExpenses.total,
           labourcost: calculatedExpenses.labour,
-          engineercost: calculatedExpenses.engineer,
+          engineerCost: calculatedExpenses.engineer,
+          materialCost: calculatedExpenses.material,
           remainingBudget: budgetValue - calculatedExpenses.total
        });
        setFinance(newFin);
@@ -199,6 +203,12 @@ export default function Dashboard() {
                   </span>
                   <span className="font-black text-slate-900">₹{calculatedExpenses.engineer.toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between items-center p-3 rounded-2xl bg-indigo-50/40 border border-indigo-100">
+                  <span className="flex items-center gap-3 text-sm text-slate-700 font-bold">
+                    <div className="w-2.5 h-2.5 rounded-full bg-indigo-500"></div> Material Cost
+                  </span>
+                  <span className="font-black text-slate-900">₹{calculatedExpenses.material.toLocaleString()}</span>
+                </div>
                 <div className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border border-slate-200">
                   <span className="flex items-center gap-3 text-sm text-slate-700 font-bold">
                     <div className="w-2.5 h-2.5 rounded-full bg-slate-700"></div> Total Expenses
@@ -222,8 +232,13 @@ export default function Dashboard() {
             <p className="text-4xl font-black text-blue-900 tracking-tight mb-3">₹{calculatedExpenses.engineer.toLocaleString()}</p>
             <p className="text-xs text-blue-700 font-medium">Sum of all engineers' monthly salaries on this site</p>
           </div>
+          <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-7 rounded-3xl border border-indigo-200">
+             <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">Material Cost</p>
+             <p className="text-4xl font-black text-indigo-900 tracking-tight mb-3">₹{calculatedExpenses.material.toLocaleString()}</p>
+             <p className="text-xs text-indigo-700 font-medium">Cumulative cost of all recorded inventory materials</p>
+          </div>
           <div className="md:col-span-2 bg-gradient-to-br from-slate-800 to-slate-900 p-7 rounded-3xl text-white">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Expense (Labour + Engineers)</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Total Expense (Labour + Engineers + Materials)</p>
             <p className="text-5xl font-black tracking-tighter mb-3">₹{calculatedExpenses.total.toLocaleString()}</p>
             {finance && (
               <div className="flex items-center gap-3">
@@ -235,37 +250,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-          <div className="flex justify-between items-center mb-8">
-            <h4 className="font-black text-slate-900 text-lg uppercase tracking-tight">Recent Activity</h4>
-            <button className="text-orange-800 text-[11px] font-black uppercase tracking-widest hover:text-orange-950 transition-colors bg-white border border-slate-100 px-4 py-2 rounded-xl shadow-sm">View History</button>
-          </div>
-          {/* Activity List */}
-          <div className="space-y-6">
-            {[
-              { ref: 'Concrete Supplies Ltd', cat: 'Inventory', date: 'Oct 24, 2023', amt: '$3,240.00', color: 'bg-indigo-50 text-indigo-600' },
-              { ref: 'Weekly Wages - Site A', cat: 'Labor', date: 'Oct 22, 2023', amt: '$12,850.00', color: 'bg-orange-50 text-orange-600' },
-              { ref: 'Global Heavy Mach.', cat: 'Equipment', date: 'Oct 20, 2023', amt: '$1,100.00', color: 'bg-emerald-50 text-emerald-600' },
-            ].map((row, i) => (
-              <div key={i} className="flex justify-between items-center border-b border-slate-50 pb-5 last:border-0 last:pb-0 hover:bg-slate-50/50 transition-colors p-2 -m-2 rounded-2xl">
-                <div className="flex items-center gap-4">
-                   <div className="w-12 h-12 bg-white border border-slate-100 rounded-2xl flex items-center justify-center shadow-sm text-slate-400">
-                      <Plus size={20} />
-                   </div>
-                   <div>
-                     <p className="font-bold text-slate-900 text-sm">{row.ref}</p>
-                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">REF-{882000 + i}</p>
-                   </div>
-                </div>
-                <div className="flex flex-col items-end gap-1.5">
-                   <span className={`${row.color} px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider`}>{row.cat}</span>
-                   <p className="text-slate-400 text-[11px] font-medium">{row.date}</p>
-                </div>
-                <span className="font-black text-slate-900 text-base">{row.amt}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+
       </div>
     </div>
   );

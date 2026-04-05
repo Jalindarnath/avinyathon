@@ -29,3 +29,12 @@ export const updateEngineer = async (documentId, data) => {
     data
   );
 };
+
+// Delete Engineer
+export const deleteEngineer = async (documentId) => {
+  return databases.deleteDocument(
+    DATABASE_ID,
+    COLLECTIONS.ENGINEERS,
+    documentId
+  );
+};

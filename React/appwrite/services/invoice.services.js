@@ -1,21 +1,53 @@
-import { databases, ID, Query } from "../config/appwriteConfig";
-import { DATABASE_ID, COLLECTIONS } from "../config/appwriteConfig";
+import { databases, storage, BUCKET_ID, DATABASE_ID, COLLECTIONS, ID, Query } from "../config/appwriteConfig";
 
-//  Add Inventory
-export const addInventory = async (data) => {
+//  Add Invoice
+export const addInvoice = async (data) => {
   return databases.createDocument(
     DATABASE_ID,
-    COLLECTIONS.INVENTORY,
+    COLLECTIONS.INVOICES,
     ID.unique(),
     data
   );
 };
 
-//  Get Inventory by Site
-export const getInventoryBySite = async (siteId) => {
+//  Upload Invoice File
+export const uploadInvoiceFile = async (file) => {
+  return storage.createFile(
+    BUCKET_ID,
+    ID.unique(),
+    file
+  );
+};
+
+// Get Invoices by Site
+export const getInvoicesBySite = async (siteId) => {
   return databases.listDocuments(
     DATABASE_ID,
-    COLLECTIONS.INVENTORY,
+    COLLECTIONS.INVOICES,
     [Query.equal("siteId", siteId)]
   );
+};
+
+// Update Invoice
+export const updateInvoice = async (documentId, data) => {
+  return databases.updateDocument(
+    DATABASE_ID,
+    COLLECTIONS.INVOICES,
+    documentId,
+    data
+  );
+};
+
+// Delete Invoice
+export const deleteInvoice = async (documentId) => {
+  return databases.deleteDocument(
+    DATABASE_ID,
+    COLLECTIONS.INVOICES,
+    documentId
+  );
+};
+
+// Get File Preview URL
+export const getFilePreview = (fileId) => {
+  return storage.getFileView(BUCKET_ID, fileId);
 };

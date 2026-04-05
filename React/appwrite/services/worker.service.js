@@ -29,3 +29,12 @@ export const updateWorker = async (documentId, data) => {
     data
   );
 };
+
+// Delete Worker
+export const deleteWorker = async (documentId) => {
+  return databases.deleteDocument(
+    DATABASE_ID,
+    COLLECTIONS.WORKERS,
+    documentId
+  );
+};
