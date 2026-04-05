@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Pencil, Trash2, Users, X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UserPlus, Pencil, Trash2, Users, X, Loader2, ChevronLeft, ChevronRight, Wallet, BadgeInfo, HardHat } from 'lucide-react';
 import { addWorker, getWorkersBySite, updateWorker, deleteWorker, getPaginatedWorkers } from "../../../appwrite/services/worker.service.js";
 import { createPayment } from "../../../appwrite/services/payment.service.js";
 import { updateLaborCost } from "../../../appwrite/services/finance.service.js";
@@ -146,8 +146,7 @@ const Workers = () => {
       // 3. Reset Worker Days
       await updateWorker(worker.$id, { 
         presentDays: "0",
-        // Do we reset deductions too? User said set payment and days to zero.
-        // Assuming deductions should also be cleared (restart the week)
+        //Assume deductions should also be cleared (restart the week)
         deductedAmt: 0
       });
 
@@ -169,214 +168,268 @@ const Workers = () => {
 
   return (
     <div className="flex-1 ml-64 bg-slate-50 min-h-screen p-8">
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden relative">
-        {/* Header & Site Selector */}
-        <div className="p-8">
-          <div className="flex justify-between items-start mb-10">
-            <div>
-              <h3 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-2xl">
-                   <Users className="text-orange-800" size={24} />
-                </div>
-                {isAdmin ? 'Global Laborers Directory' : 'Site Laborers Directory'}
-              </h3>
-              <p className="text-slate-400 font-bold text-sm mt-1 uppercase tracking-tighter">
-                {isAdmin ? `Managing ${total} workers across all construction sites.` : 'Maintain records for your site workforce.'}
-              </p>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex items-center text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
-                {isAdmin ? 'All Sites (Global)' : (selectedSite ? (selectedSite.siteName || selectedSite.name) : 'No Site Selected')}
-              </div>
-              {!isAdmin && selectedSite && (
-                <button 
-                  onClick={() => setShowModal(true)}
-                  className="bg-orange-800 text-white px-6 py-3 rounded-2xl flex items-center gap-2 text-sm font-black shadow-xl shadow-orange-900/10 hover:bg-orange-950 transition-all active:scale-95"
-                >
-                  <UserPlus size={18} /> Register Laborer
-                </button>
-              )}
-            </div>
+      {/* Header Section */}
+      <header className="flex justify-between items-center mb-8 border-b border-slate-200 pb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+             <div className="w-2 h-2 rounded-full bg-[#f2711c]"></div>
+             <p className="text-[#f2711c] text-[10px] font-bold uppercase tracking-widest">Workforce Management</p>
           </div>
+          <h2 className="text-3xl font-bold text-slate-800">
+             {isAdmin ? 'Global Laborers Directory' : 'Site Laborers Directory'}
+          </h2>
+          <p className="text-slate-500 text-sm font-medium">
+             {isAdmin ? `Managing ${total} personnel across all organizational sites.` : 'Operational records and attendance tracking for your site.'}
+          </p>
+        </div>
 
-          {/* Table Container */}
-          <div className="overflow-x-auto rounded-2xl border border-slate-50">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50/50 text-[10px] uppercase tracking-[0.2em] text-slate-400 font-bold">
+        <div className="flex items-center gap-4">
+           {!isAdmin && selectedSite && (
+              <button 
+                onClick={() => setShowModal(true)}
+                className="bg-[#f2711c] hover:bg-[#d96215] text-white text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+              >
+                <UserPlus size={16} /> Register Laborer
+              </button>
+           )}
+           <div className="flex flex-col items-end px-4 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Current Context</span>
+              <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">
+                 {isAdmin ? 'Global Administration' : (selectedSite ? (selectedSite.siteName || selectedSite.name) : 'No Site Selected')}
+              </span>
+           </div>
+        </div>
+      </header>
+
+      {/* Main Content Card */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="flex items-center gap-3">
+               <Users size={18} className="text-[#f2711c]" />
+               <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">Workforce Registry</h4>
+            </div>
+            <div className="flex items-center gap-4">
+               {isWeekend && (
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
+                     <Wallet size={12} />
+                     <span>PAYOUT WINDOW OPEN</span>
+                  </div>
+               )}
+               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total: {total} Entries</span>
+            </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-white border-b border-slate-100">
+              <tr className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+                <th className="px-6 py-4">Personnel Details</th>
+                <th className="px-6 py-4">Trade / Area</th>
+                <th className="px-6 py-4">Attendance</th>
+                <th className="px-6 py-4">Daily Rate</th>
+                <th className="px-6 py-4">Assigned Manager</th>
+                <th className="px-6 py-4 text-right">Operations</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 italic-none">
+              {loading ? (
                 <tr>
-                  <th className="px-6 py-5">Personnel</th>
-                  <th className="px-6 py-5">Role/Trade</th>
-                  <th className="px-6 py-5">Attendance</th>
-                  <th className="px-6 py-5">Daily (₹)</th>
-                  <th className="px-6 py-5">Manager</th>
-                  <th className="px-6 py-5 text-right">Actions</th>
+                  <td colSpan="6" className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <Loader2 size={32} className="text-[#f2711c] animate-spin" />
+                      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest tracking-widest">Synchronizing Labor Records...</p>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {loading ? (
-                  <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-300 font-black flex items-center justify-center gap-3">
-                    <Loader2 className="animate-spin text-orange-800" size={20} />
-                    Synchronizing Records...
-                  </td></tr>
-                ) : workers.length === 0 ? (
-                  <tr><td colSpan="6" className="px-6 py-12 text-center text-slate-300 font-black uppercase tracking-widest">No Laborers found.</td></tr>
-                ) : (
-                  workers.map((person) => (
-                    <tr key={person.$id} className="group hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-800 font-black text-xs shadow-sm">
-                            {person.name?.substring(0, 2).toUpperCase() || '??'}
-                          </div>
-                          <div>
-                            <p className="font-black text-slate-900">{person.name}</p>
-                            <p className="text-[10px] text-slate-400 font-black tracking-widest uppercase">{person.$id.substring(0, 8)}</p>
-                          </div>
+              ) : workers.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-20 text-center text-slate-400 text-xs font-medium">
+                    No laborers detected for this environment. Initialize records to begin tracking.
+                  </td>
+                </tr>
+              ) : (
+                workers.map((person) => (
+                  <tr key={person.$id} className="group hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-[#f2711c] font-bold text-xs group-hover:scale-105 transition-transform">
+                          {person.name?.substring(0, 2).toUpperCase() || '??'}
                         </div>
-                      </td>
-                      <td className="px-6 py-5">
-                         <span className="text-xs font-black text-slate-500 uppercase px-3 py-1 bg-slate-50 border border-slate-100 rounded-lg">
-                           {person.role}
-                         </span>
-                      </td>
-                      <td className="px-6 py-5 text-sm font-black text-orange-800">
-                        {person.presentDays || '0'} Days
-                      </td>
-                      <td className="px-6 py-5 text-sm text-emerald-700 font-black">₹{person.dailyWage}</td>
-                      <td className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">{person.manager || 'Unassigned'}</td>
-                      <td className="px-6 py-5 text-right flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div>
+                          <p className="font-bold text-slate-800">{person.name}</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">UID: {person.$id.substring(0, 10)}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                       <span className="text-[10px] font-bold text-slate-500 uppercase px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-md">
+                         {person.role || 'Unspecified'}
+                       </span>
+                    </td>
+                    <td className="px-6 py-5">
+                       <div className="flex items-center gap-2">
+                          <div className={`w-1.5 h-1.5 rounded-full ${Number(person.presentDays) > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                          <span className="text-xs font-bold text-slate-700">{person.presentDays || '0'} Days Present</span>
+                       </div>
+                    </td>
+                    <td className="px-6 py-5">
+                       <span className="text-xs font-bold text-slate-800">₹{person.dailyWage.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-5">
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{person.manager || 'Unassigned'}</p>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center justify-end gap-2">
                         {!isAdmin && (
                           <button
                             onClick={() => handlePay(person)}
                             disabled={!isWeekend || parseInt(person.presentDays) === 0 || processingPay === person.$id}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all border ${
                               isWeekend && parseInt(person.presentDays) > 0 
-                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/10 hover:bg-emerald-700' 
-                                : 'bg-slate-100 text-slate-300 cursor-not-allowed'
+                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-600 hover:text-white' 
+                                : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
                             }`}
                           >
-                            {processingPay === person.$id ? '...' : (isWeekend ? 'Cash Out' : 'Weekend Only')}
+                            {processingPay === person.$id ? <Loader2 size={12} className="animate-spin" /> : (isWeekend ? 'Cash Out' : 'Wait: Sun')}
                           </button>
                         )}
-                        <div className="flex items-center gap-1">
-                          <button 
-                            onClick={() => handleEdit(person)}
-                            className="p-2 text-slate-400 hover:text-orange-800 hover:bg-orange-50 rounded-xl transition-all"
-                          >
-                            <Pencil size={18} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(person.$id, person.name)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Controls */}
-          {isAdmin && total > limit && (
-            <div className="p-6 border-t border-slate-50 flex items-center justify-between bg-slate-50/30">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, total)} of {total} personnel
-              </p>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setPage(prev => Math.max(1, prev - 1))}
-                  disabled={page === 1}
-                  className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-white hover:text-orange-800 disabled:opacity-30 transition-all shadow-sm"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <div className="flex items-center px-4 text-xs font-black text-slate-900">
-                  Page {page}
-                </div>
-                <button 
-                  onClick={() => setPage(prev => prev + 1)}
-                  disabled={page * limit >= total}
-                  className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-white hover:text-orange-800 disabled:opacity-30 transition-all shadow-sm"
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </div>
-            </div>
-          )}
+                        <button 
+                          onClick={() => handleEdit(person)}
+                          className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all"
+                          title="Edit Personal Info"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(person.$id, person.name)}
+                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          title="Purge Record"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
 
-      {/* Modal Container */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={handleCloseModal}></div>
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden relative z-10 shadow-2xl border border-slate-100">
-            <div className="flex justify-between items-center p-8 border-b border-slate-50">
-              <h3 className="text-2xl font-black text-slate-900">{editingId ? 'Modify Laborer' : 'Add New Laborer'}</h3>
-              <button onClick={handleCloseModal} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all">
-                <X size={20} />
+        {/* Improved Pagination Controls */}
+        {isAdmin && total > limit && (
+          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/20">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, total)} of {total} personnel
+            </p>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                disabled={page === 1}
+                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-orange-800 disabled:opacity-30 transition-all shadow-sm"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <div className="flex items-center px-4 text-xs font-bold text-slate-700">
+                Page {page}
+              </div>
+              <button 
+                onClick={() => setPage(prev => prev + 1)}
+                disabled={page * limit >= total}
+                className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-white hover:text-orange-800 disabled:opacity-30 transition-all shadow-sm"
+              >
+                <ChevronRight size={16} />
               </button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modern Centered Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={handleCloseModal}></div>
+          <div className="bg-white rounded-xl w-full max-w-md overflow-hidden relative z-10 shadow-2xl border border-slate-200">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div className="flex items-center gap-3">
+                   <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-sm">
+                      <UserPlus size={18} className="text-slate-600" />
+                   </div>
+                   <div>
+                      <h3 className="text-lg font-bold text-slate-800">{editingId ? 'Modify Laborer' : 'Register Laborer'}</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Workforce Protocol</p>
+                   </div>
+                </div>
+                <button 
+                  onClick={handleCloseModal} 
+                  className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-200 transition-all text-slate-400"
+                >
+                  <X size={20} />
+                </button>
+            </div>
             
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Worker Name</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Legal Full Name</label>
                 <input 
                   type="text" 
                   name="name" 
                   value={formData.name}
                   onChange={handleChange}
                   required 
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all text-slate-900"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] transition-all text-slate-800"
                   placeholder="e.g. Ramesh Kumar" 
                 />
               </div>
               
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Trade / Role</label>
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Designated Trade</label>
                 <input 
                   type="text" 
                   name="role" 
                   value={formData.role}
                   onChange={handleChange}
                   required 
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all text-slate-900"
-                  placeholder="e.g. Mason, Helper, Painter" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] transition-all text-slate-800"
+                  placeholder="e.g. Mason Lead, Skilled Helper" 
                 />
               </div>
               
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Daily Wage (₹)</label>
-                <input 
-                  type="number" 
-                  name="dailyWage" 
-                  value={formData.dailyWage}
-                  onChange={handleChange}
-                  required 
-                  min="0"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-sm font-black focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 transition-all text-slate-900"
-                />
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Standard Daily Rate (₹)</label>
+                <div className="relative">
+                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs font-bold">₹</span>
+                   <input 
+                     type="number" 
+                     name="dailyWage" 
+                     value={formData.dailyWage}
+                     onChange={handleChange}
+                     required 
+                     min="0"
+                     className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] transition-all text-slate-800"
+                   />
+                </div>
               </div>
 
-              <div className="pt-4">
-                <button 
-                  type="submit" 
-                  disabled={submitting}
-                  className="w-full bg-orange-800 text-white font-black py-5 px-6 rounded-2xl shadow-xl shadow-orange-900/10 hover:bg-orange-950 disabled:opacity-70 transition-all uppercase tracking-widest text-xs active:scale-95 flex items-center justify-center gap-3"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="animate-spin" size={16} />
-                      Saving Records...
-                    </>
-                  ) : (
-                    <>{editingId ? 'Commit Changes' : 'Register Laborer'}</>
-                  )}
-                </button>
+              <div className="pt-4 flex gap-3">
+                 <button 
+                   type="button"
+                   onClick={handleCloseModal}
+                   className="flex-1 px-4 py-3 rounded-lg border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+                 >
+                   Discard
+                 </button>
+                 <button 
+                   type="submit" 
+                   disabled={submitting}
+                   className="flex-1 bg-[#f2711c] text-white font-bold py-3 rounded-lg shadow-sm hover:bg-[#d96215] transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                 >
+                   {submitting ? (
+                     <Loader2 className="animate-spin" size={14} />
+                   ) : (
+                     <>{editingId ? 'Update Record' : 'Create Record'}</>
+                   )}
+                 </button>
               </div>
             </form>
           </div>

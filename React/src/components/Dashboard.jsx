@@ -278,40 +278,40 @@ export default function Dashboard() {
   return (
     <div className="flex-1 ml-64 bg-slate-50 min-h-screen p-8">
       {/* Header */}
-      <header className="flex justify-between items-center mb-10">
-        <div className="flex items-center gap-4 flex-1 max-w-xl">
+      <header className="flex justify-between items-center mb-8 border-b border-slate-200 pb-6">
+        <div className="flex items-center gap-4">
           {!isAdmin && selectedSite && (
-            <div className="flex items-center gap-2 text-sm font-bold text-orange-800 bg-orange-50 px-4 py-2.5 rounded-2xl border border-orange-100 shadow-sm">
-              <span className="text-orange-400 uppercase text-[10px] tracking-widest mr-2">Active Site:</span>
-              <span className="truncate">{selectedSite.siteName || selectedSite.name || 'Unnamed Site'}</span>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Workspace</span>
+              <span className="text-lg font-bold text-slate-800">{selectedSite.siteName || selectedSite.name || 'Unnamed Site'}</span>
             </div>
           )}
           {isAdmin && (
-             <div className="flex items-center gap-2 text-sm font-bold text-slate-800 bg-slate-100 px-4 py-2.5 rounded-2xl border border-slate-200 shadow-sm">
-                <BarChart3 size={16} className="text-slate-400" />
-                <span className="uppercase text-[10px] tracking-widest text-slate-400">Environment:</span>
-                <span>Global Production</span>
-             </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrative Control</span>
+              <span className="text-lg font-bold text-slate-800">Global Overview</span>
+            </div>
           )}
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3 border-l pl-6 border-gray-200">
-            {isAdmin && (
-              <button 
-                onClick={() => window.location.href = '/create-manager'}
-                className="bg-orange-800 text-white hover:bg-orange-700 text-xs font-bold py-2 px-4 rounded-lg shadow-sm mr-2 transition-colors flex items-center gap-1"
-              >
-                <Users size={14} /> New Manager
-              </button>
-            )}
+        <div className="flex items-center gap-4">
+          {isAdmin && (
+            <button 
+              onClick={() => window.location.href = '/create-manager'}
+              className="bg-[#f2711c] hover:bg-[#d96215] text-white text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+            >
+              <Plus size={16} /> Create Manager
+            </button>
+          )}
+          <div className="h-10 w-px bg-slate-200 mx-2" />
+          <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-sm font-bold">{user?.name || 'User'}</p>
-              <p className="text-[10px] text-gray-400 uppercase font-medium">{isAdmin ? 'Project Admin' : 'Site Manager'}</p>
+              <p className="text-sm font-bold text-slate-800">{user?.name || 'User'}</p>
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
             </div>
             <button 
               onClick={logout}
-              className="h-10 w-10 flex items-center justify-center rounded-full border-2 border-white shadow-sm bg-orange-100 text-orange-800 hover:bg-orange-200 transition-colors"
+              className="h-10 w-10 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-red-600 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm"
               title="Logout"
             >
               <LogOut size={16} />
@@ -322,162 +322,174 @@ export default function Dashboard() {
 
       {/* Hero Section */}
       <section className="mb-10">
-        <h2 className="text-5xl font-black text-slate-900 mb-3 tracking-tight">
-          {isAdmin ? 'Global Command Center' : 'Executive Summary'}
+        <h2 className="text-3xl font-bold text-slate-800 mb-2">
+          {isAdmin ? 'Global Command Center' : 'Site Performance Summary'}
         </h2>
-        <p className="text-slate-500 max-w-xl leading-relaxed font-medium">
+        <p className="text-slate-500 max-w-2xl text-sm font-medium">
           {isAdmin ? 
-            'Real-time aggregation of all construction sites, workforce metrics, and consolidated financials.' : 
-            'Real-time overview of your site performance and budget tracking.'
+            'Real-time aggregation of all active construction sites, consolidated workforce metrics, and portfolio-wide financial analytics.' : 
+            'Comprehensive overview of site operations, workforce attendance, and real-time budget utilization tracking.'
           }
         </p>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Cards Section */}
       {isAdmin ? (
-        <div className="space-y-10">
+        <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard 
-              title="Total Projects" 
+              title="Active Sites" 
               value={sites?.length || "0"} 
-              subtitle="Active Sites" 
+              subtitle="Managed Projects" 
               icon={Building2} 
-              colorClass="bg-blue-50" 
+              colorClass="bg-blue-50 text-blue-600" 
             />
              <StatCard 
-              title="Global Workforce" 
+              title="Total Workforce" 
               value={globalStats.totalWorkers + globalStats.totalEngineers} 
               subtitle={`${globalStats.totalWorkers} Workers | ${globalStats.totalEngineers} Eng.`} 
               icon={Users} 
-              colorClass="bg-orange-50" 
+              colorClass="bg-orange-50 text-orange-600" 
             />
             <StatCard 
-              title="Consolidated Budget" 
+              title="Global Budget" 
               value={`₹${globalStats.totalBudget.toLocaleString()}`} 
-              subtitle="Total Allocation" 
+              subtitle="Consolidated Capital" 
               icon={PieChart} 
-              colorClass="bg-indigo-50" 
+              colorClass="bg-indigo-50 text-indigo-600" 
             />
             <StatCard 
               title="Total Expenses" 
               value={`₹${globalStats.totalExpenses.toLocaleString()}`} 
-              subtitle="Global Utilization" 
+              subtitle="Portfolio Utilization" 
               icon={Wallet} 
-              colorClass="bg-emerald-50" 
+              colorClass="bg-emerald-50 text-emerald-600" 
             />
           </div>
 
-          {/* Admin Tabs */}
-          <div className="flex bg-slate-100 p-1.5 rounded-2xl w-fit">
+          {/* Navigation Tabs */}
+          <div className="flex bg-white p-1 rounded-xl border border-slate-200 w-fit shadow-sm">
             <button 
               onClick={() => setActiveTab('finance')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'finance' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'finance' ? 'bg-slate-100 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              Finance
+              Financial Control
             </button>
             <button 
               onClick={() => setActiveTab('workers')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'workers' ? 'bg-white text-orange-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'workers' ? 'bg-slate-100 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              Workers
+              Laborers
             </button>
             <button 
               onClick={() => setActiveTab('engineers')}
-              className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'engineers' ? 'bg-white text-blue-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`px-6 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'engineers' ? 'bg-slate-100 text-slate-800' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              Engineers
+              Eng. Staff
             </button>
           </div>
 
           {activeTab === 'finance' && (
-            <>
-              <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-                <div className="flex items-center justify-between mb-8">
+            <div className="space-y-6 animate-in fade-in duration-500">
+              {/* Global Progress Card */}
+              <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h3 className="text-xl font-black text-slate-900">Portfolio Performance</h3>
-                      <p className="text-xs text-slate-400 font-medium">Global utilization vs budget across all {sites?.length} sites</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-black text-slate-900">{globalStats.totalBudget > 0 ? Math.round((globalStats.totalExpenses / globalStats.totalBudget) * 100) : 0}%</p>
-                      <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Efficiency</p>
+                      <h3 className="text-lg font-bold text-slate-800">Expenditure Efficiency</h3>
+                      <p className="text-xs text-slate-400 font-medium">Aggregate spending across all active project sites</p>
                     </div>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-4 mb-2">
+                <div className="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden">
                     <div 
-                      className="h-4 rounded-full bg-indigo-600 transition-all duration-1000"
+                      className="h-full bg-[#f2711c] transition-all duration-700"
                       style={{ width: `${Math.min(100, (globalStats.totalExpenses / globalStats.totalBudget) * 100)}%` }}
                     />
                 </div>
-                <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 tracking-widest mt-4">
-                    <span>Spent: ₹{globalStats.totalExpenses.toLocaleString()}</span>
-                    <span>Remaining: ₹{(globalStats.totalBudget - globalStats.totalExpenses).toLocaleString()}</span>
+                <div className="flex justify-between items-center bg-slate-50 p-4 rounded-lg border border-slate-100">
+                    <div className="flex gap-8">
+                       <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Spent</p>
+                          <p className="text-lg font-bold text-slate-800">₹{globalStats.totalExpenses.toLocaleString()}</p>
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Portfolio Balance</p>
+                          <p className="text-lg font-bold text-emerald-600">₹{(globalStats.totalBudget - globalStats.totalExpenses).toLocaleString()}</p>
+                       </div>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Usage Rate</p>
+                       <p className="text-lg font-bold text-slate-800">{globalStats.totalBudget > 0 ? Math.round((globalStats.totalExpenses / globalStats.totalBudget) * 100) : 0}%</p>
+                    </div>
                 </div>
               </div>
 
-              {/* Site Budget Allocation Box */}
-              <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                    <Settings2 size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900">Site Budget Control</h3>
-                    <p className="text-xs text-slate-400 font-medium">Manage financial allocations for each project site</p>
-                  </div>
+              {/* Site Budget Management Table */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100">
+                  <h3 className="text-lg font-bold text-slate-800">Site-wise Capital Allocation</h3>
+                  <p className="text-xs text-slate-400 font-medium">Adjust project budgets and monitor real-time resource utilization</p>
                 </div>
                 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="border-b border-slate-100">
-                        <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Site Name</th>
-                        <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Current Budget</th>
-                        <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Expenses</th>
-                        <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Top-up Amount</th>
-                        <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Action</th>
+                      <tr className="bg-slate-50 border-b border-slate-100">
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Site Identity</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Current Capital</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Actual Utilization</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Capital Adjustment</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Operations</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
+                    <tbody className="divide-y divide-slate-100">
                       {sites.map(site => {
                         const siteFinance = allFinance.find(f => f.siteId === site.$id);
+                        const usage = siteFinance?.budget > 0 ? (siteFinance?.expenses / siteFinance?.budget) * 100 : 0;
                         return (
-                          <tr key={site.$id} className="group hover:bg-slate-50/50 transition-colors">
-                            <td className="py-4 font-bold text-slate-700">{site.siteName || site.name}</td>
-                            <td className="py-4 font-black text-slate-900">₹{(siteFinance?.budget || 0).toLocaleString()}</td>
-                            <td className="py-4">
-                              <span className="text-xs font-bold text-slate-500">₹{(siteFinance?.expenses || 0).toLocaleString()}</span>
-                              <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1">
-                                <div 
-                                  className="bg-orange-500 h-1.5 rounded-full" 
-                                  style={{ width: `${Math.min(100, (siteFinance?.expenses / siteFinance?.budget) * 100 || 0)}%` }}
-                                />
+                          <tr key={site.$id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-6 py-4">
+                              <p className="font-bold text-slate-800">{site.siteName || site.name}</p>
+                              <p className="text-[10px] text-slate-400 font-medium">{site.siteId}</p>
+                            </td>
+                            <td className="px-6 py-4 font-bold text-slate-800">₹{(siteFinance?.budget || 0).toLocaleString()}</td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1 w-20 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all ${usage > 90 ? 'bg-red-500' : 'bg-blue-500'}`} 
+                                    style={{ width: `${Math.min(100, usage)}%` }}
+                                  />
+                                </div>
+                                <span className="text-[11px] font-bold text-slate-500">₹{(siteFinance?.expenses || 0).toLocaleString()}</span>
                               </div>
                             </td>
-                            <td className="py-4">
-                              <div className="relative max-w-[150px]">
-                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                            <td className="px-6 py-4">
+                              <div className="relative w-32">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">₹</span>
                                 <input 
                                   type="number"
-                                  className="w-full pl-7 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none"
+                                  className="w-full pl-6 pr-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold focus:ring-2 focus:ring-[#f2711c] focus:border-[#f2711c] outline-none transition-all"
                                   value={siteBudgets[site.$id] || ''}
                                   onChange={(e) => setSiteBudgets({...siteBudgets, [site.$id]: e.target.value})}
-                                  placeholder="Add amount"
+                                  placeholder="Amount"
                                 />
                               </div>
                             </td>
-                            <td className="py-4">
+                            <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
                                 <button 
                                   onClick={() => handleUpdateSiteBudget(site.$id)}
-                                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all active:scale-95 whitespace-nowrap"
+                                  className="bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white p-2 rounded-lg transition-all"
+                                  title="Add Funds"
                                 >
-                                  <Plus size={14} /> Add
+                                  <Plus size={14} />
                                 </button>
                                 <button 
                                   onClick={() => handleSubtractSiteBudget(site.$id)}
-                                  className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all active:scale-95 whitespace-nowrap"
+                                  className="bg-red-50 text-red-600 hover:bg-red-600 hover:text-white p-2 rounded-lg transition-all"
+                                  title="Recall Funds"
                                 >
-                                  <Minus size={14} /> Subtract
+                                  <Minus size={14} />
                                 </button>
                               </div>
                             </td>
@@ -487,55 +499,54 @@ export default function Dashboard() {
                     </tbody>
                   </table>
                   {sites.length === 0 && (
-                    <div className="py-12 text-center">
-                      <p className="text-slate-400 font-medium">No sites available to manage.</p>
+                    <div className="py-16 text-center">
+                      <p className="text-slate-400 text-sm font-medium">No sites available to manage.</p>
                     </div>
                   )}
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {activeTab === 'workers' && (
-            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-               <div className="flex items-center gap-3 mb-6">
-                 <div className="p-2 bg-orange-50 rounded-lg text-orange-600">
-                    <Users size={20} />
-                 </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in slide-in-from-bottom-2 duration-500">
+               <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                  <div>
-                    <h3 className="text-xl font-black text-slate-900">Global Laborers Directory</h3>
-                    <p className="text-xs text-slate-400 font-medium">Manage all workers across your sites ({wTotal} total)</p>
+                    <h3 className="text-lg font-bold text-slate-800">Global Labor Register</h3>
+                    <p className="text-xs text-slate-400 font-medium">Centralized directory of all site workers ({wTotal} registered)</p>
                  </div>
                </div>
 
                <div className="overflow-x-auto">
                  <table className="w-full text-left">
                    <thead>
-                     <tr className="border-b border-slate-100">
-                       <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Worker</th>
-                       <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Trade</th>
-                       <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Daily Wage</th>
-                       <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</th>
+                     <tr className="bg-slate-50 border-b border-slate-100">
+                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Personnel Details</th>
+                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Trade / Area</th>
+                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Standard Daily Rate</th>
+                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Operations</th>
                      </tr>
                    </thead>
-                   <tbody className="divide-y divide-slate-50">
+                   <tbody className="divide-y divide-slate-100">
                      {loadingPersonnel ? (
-                       <tr><td colSpan="4" className="py-12 text-center text-orange-800 font-black animate-pulse">Syncing...</td></tr>
+                       <tr><td colSpan="4" className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-slate-300" size={32}/><p className="mt-2 text-xs font-bold text-slate-400">Syncing Personnel Data...</p></td></tr>
                      ) : globalWorkers.length === 0 ? (
-                       <tr><td colSpan="4" className="py-12 text-center text-slate-400">No workers found</td></tr>
+                       <tr><td colSpan="4" className="py-20 text-center text-slate-400 text-sm font-medium">No labor records found in the system</td></tr>
                      ) : (
                        globalWorkers.map(w => (
-                         <tr key={w.$id} className="group hover:bg-slate-50/50 transition-colors">
-                           <td className="py-4">
-                              <p className="font-bold text-slate-900">{w.name}</p>
-                              <p className="text-[10px] text-slate-400">{w.$id.substring(0,8)}</p>
+                         <tr key={w.$id} className="hover:bg-slate-50/50 transition-colors">
+                           <td className="px-6 py-4">
+                              <p className="font-bold text-slate-800">{w.name}</p>
+                              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">ID: {w.$id.substring(0,10)}</p>
                            </td>
-                           <td className="py-4"><span className="text-xs font-bold text-slate-500 uppercase px-2 py-1 bg-slate-50 border rounded-lg">{w.role}</span></td>
-                           <td className="py-4 font-black">₹{w.dailyWage}</td>
-                           <td className="py-4">
+                           <td className="px-6 py-4">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-md">{w.role}</span>
+                           </td>
+                           <td className="px-6 py-4 font-bold text-slate-800">₹{w.dailyWage.toLocaleString()}</td>
+                           <td className="px-6 py-4">
                               <div className="flex gap-2">
-                                 <button onClick={() => handleEditClick(w, 'worker')} className="p-2 text-slate-400 hover:text-orange-800 hover:bg-orange-50 rounded-xl transition-all"><Pencil size={16}/></button>
-                                 <button onClick={() => handleDeleteItem(w.$id, 'worker', w.name)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"><Trash2 size={16}/></button>
+                                 <button onClick={() => handleEditClick(w, 'worker')} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all"><Pencil size={14}/></button>
+                                 <button onClick={() => handleDeleteItem(w.$id, 'worker', w.name)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={14}/></button>
                               </div>
                            </td>
                          </tr>
@@ -543,12 +554,25 @@ export default function Dashboard() {
                      )}
                    </tbody>
                  </table>
-                 {/* Pagination */}
-                 <div className="mt-6 flex items-center justify-between">
-                    <p className="text-xs text-slate-400 font-bold">Page {wPage} of {Math.ceil(wTotal / limit)}</p>
+                 
+                 {/* Clean Pagination */}
+                 <div className="p-6 border-t border-slate-100 flex items-center justify-between">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Page {wPage} of {Math.ceil(wTotal / limit) || 1}</p>
                     <div className="flex gap-2">
-                       <button onClick={() => setWPage(p => Math.max(1, p-1))} disabled={wPage === 1} className="p-2 rounded-xl border disabled:opacity-30"><ChevronLeft size={16}/></button>
-                       <button onClick={() => setWPage(p => p + 1)} disabled={wPage * limit >= wTotal} className="p-2 rounded-xl border disabled:opacity-30"><ChevronRight size={16}/></button>
+                       <button 
+                         onClick={() => setWPage(p => Math.max(1, p-1))} 
+                         disabled={wPage === 1} 
+                         className="p-2 rounded-lg border border-slate-200 disabled:opacity-30 hover:bg-slate-50 transition-all"
+                       >
+                         <ChevronLeft size={16}/>
+                       </button>
+                       <button 
+                         onClick={() => setWPage(p => p + 1)} 
+                         disabled={wPage * limit >= wTotal} 
+                         className="p-2 rounded-lg border border-slate-200 disabled:opacity-30 hover:bg-slate-50 transition-all"
+                       >
+                         <ChevronRight size={16}/>
+                       </button>
                     </div>
                  </div>
                </div>
@@ -556,45 +580,44 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'engineers' && (
-            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-               <div className="flex items-center gap-3 mb-6">
-                 <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                    <HardHat size={20} />
-                 </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-in slide-in-from-bottom-2 duration-500">
+               <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                  <div>
-                    <h3 className="text-xl font-black text-slate-900">Global Engineering Staff</h3>
-                    <p className="text-xs text-slate-400 font-medium">Manage all professional leads ({eTotal} total)</p>
+                    <h3 className="text-lg font-bold text-slate-800">Engineering Staff Roster</h3>
+                    <p className="text-xs text-slate-400 font-medium">Management of all site engineers and technical leads ({eTotal} staff)</p>
                  </div>
                </div>
 
                <div className="overflow-x-auto">
                  <table className="w-full text-left">
                    <thead>
-                     <tr className="border-b border-slate-100">
-                       <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Engineer</th>
-                       <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Specialty</th>
-                       <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Monthly Salary</th>
-                       <th className="pb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Actions</th>
+                     <tr className="bg-slate-50 border-b border-slate-100">
+                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Professional Identity</th>
+                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Specialization</th>
+                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Monthly Compensation</th>
+                       <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Operations</th>
                      </tr>
                    </thead>
-                   <tbody className="divide-y divide-slate-50">
+                   <tbody className="divide-y divide-slate-100">
                      {loadingPersonnel ? (
-                       <tr><td colSpan="4" className="py-12 text-center text-blue-800 font-black animate-pulse">Syncing...</td></tr>
+                       <tr><td colSpan="4" className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-slate-300" size={32}/><p className="mt-2 text-xs font-bold text-slate-400">Loading Staff Records...</p></td></tr>
                      ) : globalEngineers.length === 0 ? (
-                       <tr><td colSpan="4" className="py-12 text-center text-slate-400">No staff found</td></tr>
+                       <tr><td colSpan="4" className="py-20 text-center text-slate-400 text-sm font-medium">No engineering staff records found</td></tr>
                      ) : (
                        globalEngineers.map(e => (
-                         <tr key={e.$id} className="group hover:bg-slate-50/50 transition-colors">
-                           <td className="py-4">
-                              <p className="font-bold text-slate-900">{e.name}</p>
-                              <p className="text-[10px] text-slate-400">{e.$id.substring(0,8)}</p>
+                         <tr key={e.$id} className="hover:bg-slate-50/50 transition-colors">
+                           <td className="px-6 py-4">
+                              <p className="font-bold text-slate-800">{e.name}</p>
+                              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">UID: {e.$id.substring(0,10)}</p>
                            </td>
-                           <td className="py-4"><span className="text-xs font-bold text-slate-500 uppercase px-2 py-1 bg-slate-50 border rounded-lg">{e.role}</span></td>
-                           <td className="py-4 font-black">₹{(e.salary || e.monthlySalary || 0).toLocaleString()}</td>
-                           <td className="py-4">
+                           <td className="px-6 py-4">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase px-2.5 py-1 bg-slate-50 border border-slate-100 rounded-md">{e.role}</span>
+                           </td>
+                           <td className="px-6 py-4 font-bold text-slate-800">₹{(e.salary || e.monthlySalary || 0).toLocaleString()}</td>
+                           <td className="px-6 py-4">
                               <div className="flex gap-2">
-                                 <button onClick={() => handleEditClick(e, 'engineer')} className="p-2 text-slate-400 hover:text-blue-800 hover:bg-blue-50 rounded-xl transition-all"><Pencil size={16}/></button>
-                                 <button onClick={() => handleDeleteItem(e.$id, 'engineer', e.name)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"><Trash2 size={16}/></button>
+                                 <button onClick={() => handleEditClick(e, 'engineer')} className="p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-all"><Pencil size={14}/></button>
+                                 <button onClick={() => handleDeleteItem(e.$id, 'engineer', e.name)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={14}/></button>
                               </div>
                            </td>
                          </tr>
@@ -602,12 +625,13 @@ export default function Dashboard() {
                      )}
                    </tbody>
                  </table>
+                 
                  {/* Pagination */}
-                 <div className="mt-6 flex items-center justify-between">
-                    <p className="text-xs text-slate-400 font-bold">Page {ePage} of {Math.ceil(eTotal / limit)}</p>
+                 <div className="p-6 border-t border-slate-100 flex items-center justify-between">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Page {ePage} of {Math.ceil(eTotal / limit) || 1}</p>
                     <div className="flex gap-2">
-                       <button onClick={() => setEPage(p => Math.max(1, p-1))} disabled={ePage === 1} className="p-2 rounded-xl border disabled:opacity-30"><ChevronLeft size={16}/></button>
-                       <button onClick={() => setEPage(p => p + 1)} disabled={ePage * limit >= eTotal} className="p-2 rounded-xl border disabled:opacity-30"><ChevronRight size={16}/></button>
+                       <button onClick={() => setEPage(p => Math.max(1, p-1))} disabled={ePage === 1} className="p-2 rounded-lg border border-slate-200 disabled:opacity-30 hover:bg-slate-50 transition-all"><ChevronLeft size={16}/></button>
+                       <button onClick={() => setEPage(p => p + 1)} disabled={ePage * limit >= eTotal} className="p-2 rounded-lg border border-slate-200 disabled:opacity-30 hover:bg-slate-50 transition-all"><ChevronRight size={16}/></button>
                     </div>
                  </div>
                </div>
@@ -615,128 +639,214 @@ export default function Dashboard() {
           )}
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <StatCard title="Total Personnel" value={totalWorkers} subtitle="Active Today" icon={Users} colorClass="bg-orange-50" />
-            <StatCard title="Calculated Expenses" value={`₹${calculatedExpenses.total.toLocaleString()}`} subtitle="Actual utilization" icon={Wallet} colorClass="bg-emerald-50" />
-            <StatCard title="Site Budget" value={finance ? `₹${finance.budget.toLocaleString()}` : "Not Set"} badge={!finance ? "Action Required" : ""} icon={IndianRupee} colorClass="bg-indigo-50" />
+        <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatCard title="Site Workforce" value={totalWorkers} subtitle="Active Personnel" icon={Users} colorClass="bg-orange-50 text-orange-600" />
+            <StatCard title="Running Costs" value={`₹${calculatedExpenses.total.toLocaleString()}`} subtitle="Actual Outflow" icon={Wallet} colorClass="bg-emerald-50 text-emerald-600" />
+            <StatCard title="Project Capital" value={finance ? `₹${finance.budget.toLocaleString()}` : "Pending Allocation"} badge={!finance ? "Attention" : ""} icon={IndianRupee} colorClass="bg-indigo-50 text-indigo-600" />
           </div>
 
-          {/* Bottom Section: Expense Breakdown & Budget */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Budget / Allocate Panel */}
-            <div className="lg:col-span-1 bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+            {/* Allocation Panel */}
+            <div className="lg:col-span-1 bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
               {!finance ? (
                 <div className="h-full flex flex-col justify-center">
-                  <h4 className="font-black text-slate-900 text-lg mb-2">Allocate Site Budget</h4>
+                  <div className="flex items-center gap-2 mb-2 text-[#f2711c]">
+                    <Plus size={20} />
+                    <h4 className="font-bold text-slate-800">Assign Site Budget</h4>
+                  </div>
+                  <p className="text-xs text-slate-400 font-medium mb-6">Initialize the financial baseline for this project to start tracking expenditures.</p>
                   <form onSubmit={handleSetBudget} className="space-y-4">
-                    <input
-                      type="number"
-                      placeholder="e.g. 500000"
-                      value={budgetInput}
-                      onChange={(e) => setBudgetInput(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 font-bold"
-                    />
-                    <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:bg-indigo-700 transition-all">
-                      Set Budget
+                    <div className="relative">
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</span>
+                       <input
+                         type="number"
+                         placeholder="e.g. 5,00,000"
+                         value={budgetInput}
+                         onChange={(e) => setBudgetInput(e.target.value)}
+                         className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#f2711c] font-bold transition-all"
+                       />
+                    </div>
+                    <button type="submit" className="w-full bg-[#f2711c] text-white font-bold py-3 rounded-lg shadow-sm hover:bg-[#d96215] transition-all">
+                      Initialize Budget
                     </button>
                   </form>
                 </div>
               ) : (
                 <div>
-                  <h4 className="font-black text-slate-900 text-lg mb-1">Budget Overview</h4>
-                  <p className="text-xs text-slate-400 font-medium mb-5">Allocated: ₹{finance.budget.toLocaleString()}</p>
-                  <div className="mb-6">
-                    <div className="w-full bg-slate-100 rounded-full h-3">
+                  <div className="flex items-center gap-2 mb-4">
+                    <PieChart size={20} className="text-[#f2711c]" />
+                    <h4 className="font-bold text-slate-800">Budget Analytics</h4>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 mb-6">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Assigned Capital</p>
+                    <p className="text-2xl font-bold text-slate-800">₹{finance.budget.toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="mb-8">
+                    <div className="flex justify-between items-center text-xs font-bold mb-2">
+                       <span className="text-slate-400 uppercase tracking-widest">Utilization Rate</span>
+                       <span className={((calculatedExpenses.total / finance.budget) * 100) > 85 ? 'text-red-500' : 'text-slate-800'}>
+                         {Math.round((calculatedExpenses.total / finance.budget) * 100)}%
+                       </span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                       <div
-                        className={`h-3 rounded-full transition-all ${(calculatedExpenses.total / finance.budget) > 0.8 ? 'bg-red-500' : 'bg-orange-600'}`}
+                        className={`h-full transition-all duration-1000 ${((calculatedExpenses.total / finance.budget) * 100) > 85 ? 'bg-red-500' : 'bg-[#f2711c]'}`}
                         style={{ width: `${Math.min(100, Math.round((calculatedExpenses.total / finance.budget) * 100))}%` }}
                       />
                     </div>
                   </div>
-                  <div className="space-y-4">
-                     <div className="flex justify-between items-center p-3 rounded-2xl bg-orange-50/40 border border-orange-100">
-                        <span className="text-sm text-slate-700 font-bold">Labour Wages</span>
-                        <span className="font-black">₹{calculatedExpenses.labour.toLocaleString()}</span>
+
+                  <div className="space-y-3">
+                     <div className="flex justify-between items-center p-3.5 rounded-lg bg-orange-50/50 border border-orange-100/50">
+                        <div className="flex flex-col">
+                           <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest">Outflow</span>
+                           <span className="text-sm text-slate-700 font-bold">Labor Wages</span>
+                        </div>
+                        <span className="font-bold text-slate-800">₹{calculatedExpenses.labour.toLocaleString()}</span>
                      </div>
-                     <div className="flex justify-between items-center p-3 rounded-2xl bg-blue-50/40 border border-blue-100">
-                        <span className="text-sm text-slate-700 font-bold">Engineer Salaries</span>
-                        <span className="font-black">₹{calculatedExpenses.engineer.toLocaleString()}</span>
+                     <div className="flex justify-between items-center p-3.5 rounded-lg bg-blue-50/50 border border-blue-100/50">
+                        <div className="flex flex-col">
+                           <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Outflow</span>
+                           <span className="text-sm text-slate-700 font-bold">Eng. Salaries</span>
+                        </div>
+                        <span className="font-bold text-slate-800">₹{calculatedExpenses.engineer.toLocaleString()}</span>
                      </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Expense Summary Cards */}
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 content-start">
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-7 rounded-3xl border border-orange-200">
-                <p className="text-[10px] font-black uppercase text-orange-500 mb-2">Labour Cost</p>
-                <p className="text-4xl font-black text-orange-900 tracking-tight mb-3">₹{calculatedExpenses.labour.toLocaleString()}</p>
+            {/* Visual Breakdown */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3 bg-orange-50 text-orange-400 rounded-bl-xl">
+                       <Users size={16} />
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Labor Commitment</p>
+                    <p className="text-3xl font-bold text-slate-800 mb-4">₹{calculatedExpenses.labour.toLocaleString()}</p>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                       <span className="px-2 py-0.5 bg-slate-50 border rounded uppercase">Current Cycle</span>
+                    </div>
+                 </div>
+                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3 bg-blue-50 text-blue-400 rounded-bl-xl">
+                       <HardHat size={16} />
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Eng. Overhead</p>
+                    <p className="text-3xl font-bold text-slate-800 mb-4">₹{calculatedExpenses.engineer.toLocaleString()}</p>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
+                       <span className="px-2 py-0.5 bg-slate-50 border rounded uppercase">Monthly Allocation</span>
+                    </div>
+                 </div>
               </div>
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-7 rounded-3xl border border-blue-200">
-                <p className="text-[10px] font-black uppercase text-blue-500 mb-2">Engineer Cost</p>
-                <p className="text-4xl font-black text-blue-900 tracking-tight mb-3">₹{calculatedExpenses.engineer.toLocaleString()}</p>
-              </div>
-              <div className="md:col-span-2 bg-gradient-to-br from-slate-800 to-slate-900 p-7 rounded-3xl text-white">
-                <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Total Expense</p>
-                <p className="text-5xl font-black tracking-tighter mb-3">₹{calculatedExpenses.total.toLocaleString()}</p>
+
+              <div className="bg-slate-800 p-8 rounded-xl shadow-lg relative overflow-hidden">
+                 <div className="absolute -right-8 -bottom-8 opacity-10">
+                    <Briefcase size={200} className="text-white" />
+                 </div>
+                 <div className="relative z-10">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Portfolio-Wide Summary</p>
+                    <div className="flex items-baseline gap-2 mb-4">
+                       <span className="text-5xl font-bold text-white tracking-tight">₹{calculatedExpenses.total.toLocaleString()}</span>
+                       <span className="text-slate-400 font-bold text-sm">TOTAL EXPENSE</span>
+                    </div>
+                    <div className="mt-6 flex flex-wrap gap-4">
+                       <div className="flex items-center gap-2 bg-slate-700/50 px-4 py-2 rounded-lg border border-slate-600">
+                          <div className="w-2 h-2 rounded-full bg-orange-500" />
+                          <span className="text-[10px] font-bold text-slate-200 uppercase tracking-widest">Labor: {calculatedExpenses.total > 0 ? Math.round((calculatedExpenses.labour / calculatedExpenses.total) * 100) : 0}%</span>
+                       </div>
+                       <div className="flex items-center gap-2 bg-slate-700/50 px-4 py-2 rounded-lg border border-slate-600">
+                          <div className="w-2 h-2 rounded-full bg-blue-500" />
+                          <span className="text-[10px] font-bold text-slate-200 uppercase tracking-widest">Eng: {calculatedExpenses.total > 0 ? Math.round((calculatedExpenses.engineer / calculatedExpenses.total) * 100) : 0}%</span>
+                       </div>
+                    </div>
+                 </div>
               </div>
             </div>
           </div>
-        </>
-      )}
-    {/* Shared Edit Modal */}
-    {showEditModal && (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowEditModal(false)}></div>
-        <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden relative z-10 shadow-2xl border border-slate-100">
-           <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-              <h3 className="text-2xl font-black text-slate-900">Update {itemType === 'worker' ? 'Worker' : 'Engineer'}</h3>
-              <button onClick={() => setShowEditModal(false)}><X size={20} className="text-slate-400" /></button>
-           </div>
-           <form onSubmit={handleEditSubmit} className="p-8 space-y-6">
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Full Name</label>
-                <input 
-                  type="text" 
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
-                  className="w-full bg-slate-50 border rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                  required 
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Trade / Role</label>
-                <input 
-                  type="text" 
-                  value={editFormData.role}
-                  onChange={(e) => setEditFormData({...editFormData, role: e.target.value})}
-                  className="w-full bg-slate-50 border rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{itemType === 'worker' ? 'Daily Wage' : 'Monthly Salary'} (₹)</label>
-                <input 
-                  type="number" 
-                  value={editFormData.pay}
-                  onChange={(e) => setEditFormData({...editFormData, pay: e.target.value})}
-                  className="w-full bg-slate-50 border rounded-2xl px-5 py-4 text-sm font-black focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold" 
-                  required 
-                />
-              </div>
-              <button 
-                type="submit" 
-                disabled={submitting}
-                className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl shadow-xl hover:bg-black transition-all flex items-center justify-center gap-3 uppercase tracking-widest text-xs"
-              >
-                {submitting ? <Loader2 className="animate-spin" size={16}/> : 'Commit Changes'}
-              </button>
-           </form>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+
+      {/* Modern Refined Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]" onClick={() => setShowEditModal(false)}></div>
+          <div className="bg-white rounded-xl w-full max-w-md overflow-hidden relative z-10 shadow-2xl border border-slate-200">
+             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div className="flex items-center gap-3">
+                   <div className="p-2 bg-white rounded-lg border border-slate-200 shadow-sm">
+                      <Pencil size={18} className="text-slate-600" />
+                   </div>
+                   <div>
+                      <h3 className="text-lg font-bold text-slate-800">Edit Records</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{itemType === 'worker' ? 'Labor Registry' : 'Engineering Roster'}</p>
+                   </div>
+                </div>
+                <button 
+                  onClick={() => setShowEditModal(false)}
+                  className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-200 transition-all text-slate-400"
+                >
+                  <X size={20} />
+                </button>
+             </div>
+             
+             <form onSubmit={handleEditSubmit} className="p-6 space-y-5">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Legal Full Name</label>
+                  <input 
+                    type="text" 
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] focus:border-[#f2711c] transition-all" 
+                    required 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Designation / Role</label>
+                  <input 
+                    type="text" 
+                    value={editFormData.role}
+                    onChange={(e) => setEditFormData({...editFormData, role: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] focus:border-[#f2711c] transition-all" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">{itemType === 'worker' ? 'Daily Wage Rate (₹)' : 'Monthly Compensation (₹)'}</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₹</span>
+                    <input 
+                      type="number" 
+                      value={editFormData.pay}
+                      onChange={(e) => setEditFormData({...editFormData, pay: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] focus:border-[#f2711c] transition-all" 
+                      required 
+                    />
+                  </div>
+                </div>
+                
+                <div className="pt-4 flex gap-3">
+                   <button 
+                     type="button"
+                     onClick={() => setShowEditModal(false)}
+                     className="flex-1 px-4 py-3 rounded-lg border border-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+                   >
+                     Cancel
+                   </button>
+                   <button 
+                     type="submit" 
+                     disabled={submitting}
+                     className="flex-1 bg-[#f2711c] text-white font-bold py-3 rounded-lg shadow-sm hover:bg-[#d96215] transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+                   >
+                     {submitting ? <Loader2 className="animate-spin" size={14}/> : 'Save Changes'}
+                   </button>
+                </div>
+             </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
-
