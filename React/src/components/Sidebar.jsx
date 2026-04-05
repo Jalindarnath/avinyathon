@@ -45,6 +45,24 @@ export default function Sidebar() {
         </div>
       </div>
 
+      {/* User Profile & Logout Section (Global Accessibility) */}
+      <div className="mb-6 px-3 py-3.5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3 shadow-inner">
+        <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-orange-700 shadow-sm shrink-0">
+          <UserIcon size={18} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] font-bold text-slate-800 truncate">{user?.name || 'Authorized User'}</p>
+          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
+        </div>
+        <button 
+          onClick={handleLogout}
+          className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:border-rose-100 transition-all flex items-center justify-center shadow-sm"
+          title="Sign Out"
+        >
+          <LogOut size={14} />
+        </button>
+      </div>
+
       {/* Global Site Selector */}
       {sites.length > 0 && (
         <div className="mb-6 px-2">
@@ -91,16 +109,16 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom Section */}
-      {isAdmin && (
-        <div className="pt-4 border-t border-gray-100 space-y-1">
+      <div className="pt-4 border-t border-gray-100 space-y-1">
+        {isAdmin && (
           <button 
             onClick={handleCreateSiteNavigate}
-            className="w-full bg-gradient-to-r from-orange-700 to-orange-800 text-white flex items-center justify-center gap-2 py-3 rounded-xl shadow-lg shadow-orange-100 mb-4 font-semibold hover:shadow-orange-200 transition-all cursor-pointer"
+            className="w-full bg-gradient-to-r from-orange-700 to-orange-800 text-white flex items-center justify-center gap-2 py-3 rounded-xl shadow-lg shadow-orange-100 mb-2 font-semibold hover:shadow-orange-200 transition-all cursor-pointer"
           >
             <Plus size={20} /> New Site
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

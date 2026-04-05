@@ -5,6 +5,7 @@ import {
   BoxSelect,
   Layers,
   Loader2,
+  LogOut,
   ClipboardList,
   TrendingUp,
 } from "lucide-react";
@@ -69,7 +70,7 @@ const formatDate = (dateStr) => {
 // ─── Component ────────────────────────────────────────────────────────────────
 const Inventory = () => {
   const { selectedSite } = useSite();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAdmin = user?.role === 'admin';
 
   // Form state
@@ -194,262 +195,278 @@ const Inventory = () => {
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* ── Header ──────────────────────────────────────────────────────────── */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-2xl">
-                <Package className="text-orange-800" size={24} />
+        <header className="flex justify-between items-center mb-8 border-b border-slate-200 pb-6">
+          <div className="flex items-center gap-4">
+            {!isAdmin && selectedSite && (
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Workspace</span>
+                <span className="text-lg font-bold text-slate-800">{selectedSite.siteName || selectedSite.name || 'Unnamed Site'}</span>
               </div>
-              Inventory
-            </h2>
-            <p className="text-slate-500 text-sm mt-2 font-medium">
-              Track incoming materials and monitor stock levels for your site.
-            </p>
+            )}
+            {isAdmin && (
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Administrative Control</span>
+                <span className="text-lg font-bold text-slate-800">Inventory Overview</span>
+              </div>
+            )}
           </div>
-          {selectedSite && (
-            <span className="text-orange-700 bg-orange-50 border border-orange-100 px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-wider">
-              {selectedSite.siteName || selectedSite.name}
-            </span>
-          )}
-        </div>
+
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-px bg-slate-200 mx-2" />
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-bold text-slate-800">{user?.name || 'User'}</p>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
+              </div>
+              <button 
+                onClick={async () => { await logout(); window.location.href = '/login'; }}
+                className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+                title="Sign Out"
+              >
+                <LogOut size={14} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* ── Hero Section ────────────────────────────────────────────────────── */}
+        <section className="mb-10">
+          <div className="flex items-center gap-2 mb-1">
+             <div className="w-2 h-2 rounded-full bg-[#f2711c]"></div>
+             <p className="text-[#f2711c] text-[10px] font-bold uppercase tracking-widest">Logistics & Supply</p>
+          </div>
+          <h2 className="text-3xl font-bold text-slate-800 mb-2">
+            Material Inventory Control
+          </h2>
+          <p className="text-slate-500 max-w-2xl text-sm font-medium">
+            Monitor real-time stock levels, record material transfers, and track procurement costs across your construction projects.
+          </p>
+        </section>
 
         {!selectedSite ? (
-          <div className="text-center py-28 text-slate-300 font-black uppercase tracking-widest text-sm">
-            Select a site from the sidebar to manage inventory
+          <div className="text-center py-28 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-300 font-bold uppercase tracking-widest text-sm">
+            Select a project from the sidebar to manage site inventory
           </div>
         ) : (
           <>
             {/* ── Material Summary Cards ─────────────────────────────────────── */}
-            <div>
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex items-center gap-2">
-                <TrendingUp size={12} /> Current Material Stock
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-                {materialTotals.map((mat) => {
-                  const colors = MATERIAL_COLORS[mat.value];
-                  return (
-                    <div
-                      key={mat.value}
-                      className={`${colors.bg} border ${colors.border} rounded-2xl p-4 flex flex-col gap-2 transition-all hover:shadow-md`}
-                    >
-                      <div className="text-2xl">{mat.emoji}</div>
-                      <div>
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${colors.text}`}>
-                          {mat.label}
-                        </p>
-                        <p className="text-2xl font-black text-slate-900 leading-tight mt-1">
-                          {mat.total > 0 ? mat.total.toLocaleString() : "—"}
-                        </p>
-                        {mat.unit && (
-                          <p className="text-[10px] font-bold text-slate-400 uppercase">
-                            {getUnitLabel(mat.unit)}
-                          </p>
-                        )}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-4">
+              {materialTotals.map((mat) => {
+                const colors = MATERIAL_COLORS[mat.value];
+                return (
+                  <div
+                    key={mat.value}
+                    className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 relative overflow-hidden transition-all hover:shadow-md"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className={`p-2 rounded-lg ${colors.bg} ${colors.text}`}>
+                        <span className="text-xl">{mat.emoji}</span>
                       </div>
-                      <div className={`w-full h-1 rounded-full mt-auto ${mat.total > 0 ? colors.dot : "bg-slate-200"}`} />
+                      {mat.total > 0 && (
+                        <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                    <p className="text-slate-400 text-[9px] font-bold uppercase tracking-widest">{mat.label}</p>
+                    <h3 className="text-xl font-bold text-slate-800 mt-0.5">{mat.total > 0 ? mat.total.toLocaleString() : "0"}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tight">
+                      {mat.unit ? getUnitLabel(mat.unit) : "Units"}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
 
             {/* ── Main Content Grid  ─────────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
               {/* ── Entry Form ──────────────────────────────────────────────── */}
               {!isAdmin && (
-                <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-                <h3 className="text-xl font-black text-slate-900 mb-1 flex items-center gap-2">
-                  <Plus size={20} className={form.type === "outgoing" ? "text-red-700" : "text-orange-700"} />
-                  {form.type === "outgoing" ? "Send Material Back" : "Record Incoming Material"}
-                </h3>
-                <p className="text-xs font-medium text-slate-400 mb-8">
-                  {form.type === "outgoing" ? "Log materials leaving the site" : "Log materials entering the site"}
-                </p>
-
-                {/* Type Toggle */}
-                <div className="flex bg-slate-100 p-1 rounded-2xl mb-6">
-                  <button
-                    type="button"
-                    onClick={() => handleChange("type", "incoming")}
-                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                      form.type === "incoming" ? "bg-white text-orange-800 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                    }`}
-                  >
-                    Delivery (In)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleChange("type", "outgoing")}
-                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                      form.type === "outgoing" ? "bg-white text-red-700 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                    }`}
-                  >
-                    Send Back (Out)
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  {/* Material */}
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                      Material <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={form.item}
-                      onChange={(e) => handleChange("item", e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400 text-slate-800"
-                    >
-                      <option value="">Select Material...</option>
-                      {MATERIAL_OPTIONS.map((m) => (
-                        <option key={m.value} value={m.value}>
-                          {m.emoji} {m.label}
-                        </option>
-                      ))}
-                    </select>
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+                    <div className={`p-1.5 rounded-lg ${form.type === "outgoing" ? "bg-red-50 text-red-600" : "bg-orange-50 text-orange-600"}`}>
+                      {form.type === "outgoing" ? <TrendingUp size={16} className="rotate-180" /> : <Plus size={16} />}
+                    </div>
+                    <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide">
+                      {form.type === "outgoing" ? "Material Outflow" : "Material Inflow"}
+                    </h3>
                   </div>
 
-                  {/* Quantity & Unit — side by side */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                        Quantity <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="e.g. 500"
-                        value={form.quantity}
-                        onChange={(e) => handleChange("quantity", e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400 text-slate-800"
-                      />
+                  <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                    {/* Type Toggle */}
+                    <div className="flex bg-slate-100 p-1 rounded-xl mb-2">
+                      <button
+                        type="button"
+                        onClick={() => handleChange("type", "incoming")}
+                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                          form.type === "incoming" ? "bg-white text-orange-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        Delivery (IN)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleChange("type", "outgoing")}
+                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
+                          form.type === "outgoing" ? "bg-white text-red-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        Transfer (OUT)
+                      </button>
                     </div>
+
+                    {/* Material */}
                     <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                        Unit <span className="text-red-500">*</span>
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">
+                        Resource Designation <span className="text-red-500">*</span>
                       </label>
                       <select
-                        value={form.unit}
-                        onChange={(e) => handleChange("unit", e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400 text-slate-800"
+                        value={form.item}
+                        onChange={(e) => handleChange("item", e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] text-slate-800"
                       >
-                        <option value="">Unit...</option>
-                        {UNIT_OPTIONS.map((u) => (
-                          <option key={u.value} value={u.value}>
-                            {u.label}
+                        <option value="">Select Material...</option>
+                        {MATERIAL_OPTIONS.map((m) => (
+                          <option key={m.value} value={m.value}>
+                            {m.emoji} {m.label}
                           </option>
                         ))}
                       </select>
                     </div>
-                  </div>
 
-                  {/* Price */}
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                      Price (₹) <span className="text-slate-300 font-medium normal-case">Optional</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="e.g. 12000"
-                      value={form.price}
-                      onChange={(e) => handleChange("price", e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400 text-slate-800"
-                    />
-                  </div>
-
-                  {/* Supplier */}
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                      Supplier <span className="text-slate-300 font-medium normal-case">Optional</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Shri Ram Traders"
-                      value={form.supplier}
-                      onChange={(e) => handleChange("supplier", e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-400 text-slate-800"
-                    />
-                  </div>
-
-                  {/* Manager (read-only display) */}
-                  <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">
-                      Recorded By
-                    </label>
-                    <div className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-4 py-3 text-sm font-bold text-slate-500 cursor-not-allowed">
-                      {user?.name || user?.user?.name || "Manager"}
+                    {/* Quantity & Unit — side by side */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">
+                          Metric Qty <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="0.00"
+                          value={form.quantity}
+                          onChange={(e) => handleChange("quantity", e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] text-slate-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">
+                          Standard Unit <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={form.unit}
+                          onChange={(e) => handleChange("unit", e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] text-slate-800"
+                        >
+                          <option value="">Unit...</option>
+                          {UNIT_OPTIONS.map((u) => (
+                            <option key={u.value} value={u.value}>
+                              {u.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Feedback */}
-                  {formError && (
-                    <p className="text-xs font-bold text-red-600 bg-red-50 px-4 py-3 rounded-2xl border border-red-100">
-                      ⚠️ {formError}
-                    </p>
-                  )}
-                  {successMsg && (
-                    <p className="text-xs font-bold text-emerald-700 bg-emerald-50 px-4 py-3 rounded-2xl border border-emerald-100">
-                      {successMsg}
-                    </p>
-                  )}
+                    {/* Price & Supplier */}
+                    <div className="grid grid-cols-1 gap-5">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">
+                          Financial Value (₹) <span className="text-slate-300 font-medium normal-case">Optional</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Procurement Cost"
+                            value={form.price}
+                            onChange={(e) => handleChange("price", e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] text-slate-800 transition-all"
+                          />
+                        </div>
+                      </div>
 
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full bg-orange-800 text-white font-black py-4 rounded-2xl shadow-xl shadow-orange-900/10 hover:bg-orange-950 transition-all uppercase tracking-widest text-xs active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        {form.type === "outgoing" ? <TrendingUp size={14} className="rotate-180" /> : <BoxSelect size={14} />}
-                        {form.type === "outgoing" ? "Confirm Return" : "Record Entry"}
-                      </>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 block">
+                          Supplier / Source <span className="text-slate-300 font-medium normal-case">Optional</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Vendor Name"
+                          value={form.supplier}
+                          onChange={(e) => handleChange("supplier", e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#f2711c] text-slate-800 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Feedback */}
+                    {formError && (
+                      <div className="text-[10px] font-bold text-red-600 bg-red-50 px-4 py-2 rounded-lg border border-red-100 flex items-center gap-2">
+                        <span>⚠️ {formError}</span>
+                      </div>
                     )}
-                  </button>
-                </form>
+                    {successMsg && (
+                      <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-100 flex items-center gap-2">
+                        <span>✅ {successMsg}</span>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full bg-[#f2711c] text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-100 hover:bg-[#d96215] transition-all uppercase tracking-widest text-[10px] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {submitting ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          {form.type === "outgoing" ? <TrendingUp size={16} className="rotate-180" /> : <BoxSelect size={16} />}
+                          {form.type === "outgoing" ? "Confirm Disbursement" : "Authorize Entry"}
+                        </>
+                      )}
+                    </button>
+                  </form>
                 </div>
               )}
 
               {/* ── Recent Entries Table ──────────────────────────────────────── */}
-              <div className={`${isAdmin ? 'lg:col-span-5' : 'lg:col-span-3'} bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden`}>
-                <div className="px-8 py-6 border-b border-slate-50 flex items-center gap-3">
-                  <ClipboardList size={18} className="text-slate-400" />
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">
-                      Recent Transactions
+              <div className={`${isAdmin ? 'lg:col-span-5' : 'lg:col-span-3'} bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden`}>
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-3">
+                    <ClipboardList size={18} className="text-slate-400" />
+                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+                      Transaction Ledger
                     </h3>
-                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">
-                      Latest material movements at site
-                    </p>
                   </div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Historical Records</span>
                 </div>
 
                 {loading ? (
-                  <div className="py-20 text-center text-slate-300 font-black uppercase tracking-widest text-xs animate-pulse">
-                    Loading entries...
+                  <div className="py-20 text-center flex flex-col items-center justify-center gap-3">
+                    <Loader2 size={32} className="text-[#f2711c] animate-spin" />
+                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Retrieving ledger data...</p>
                   </div>
                 ) : entries.length === 0 ? (
                   <div className="py-20 text-center">
-                    <div className="text-4xl mb-3">📦</div>
-                    <p className="text-slate-300 font-black uppercase tracking-widest text-xs">
-                      No entries recorded yet
+                    <div className="text-4xl mb-3 opacity-20">📦</div>
+                    <p className="text-slate-300 font-bold uppercase tracking-widest text-[10px]">
+                      No transactions found for this site
                     </p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                      <thead className="bg-slate-50/80 text-[10px] uppercase tracking-widest text-slate-400 font-black">
+                      <thead className="bg-white border-b border-slate-100 text-[10px] uppercase tracking-widest text-slate-400 font-bold">
                         <tr>
-                          <th className="px-6 py-4">Material</th>
-                          <th className="px-6 py-4 text-right">Qty</th>
-                          <th className="px-6 py-4">Unit</th>
-                          <th className="px-6 py-4">Supplier</th>
-                          <th className="px-6 py-4 text-right">Price (₹)</th>
-                          <th className="px-6 py-4">Date</th>
+                          <th className="px-6 py-4">Resource Identity</th>
+                          <th className="px-6 py-4 text-right">Volume</th>
+                          <th className="px-6 py-4">Status</th>
+                          <th className="px-6 py-4">Vendor</th>
+                          <th className="px-6 py-4 text-right">Valuation</th>
+                          <th className="px-6 py-4">Timestamp</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50">
@@ -462,38 +479,50 @@ const Inventory = () => {
                           return (
                             <tr
                               key={entry.$id}
-                              className="hover:bg-slate-50/50 transition-colors"
+                              className="hover:bg-slate-50/50 transition-colors group"
                             >
-                              <td className="px-6 py-4">
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`text-xs font-black px-2.5 py-1 rounded-xl ${colors.bg} ${colors.text}`}
-                                  >
-                                    {mat.emoji} {mat.label}
-                                  </span>
+                              <td className="px-6 py-5">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${colors.bg} ${colors.text} shadow-sm group-hover:scale-105 transition-transform`}>
+                                    {mat.emoji}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-slate-800 text-sm">{mat.label}</p>
+                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">ID: {entry.$id.substring(0, 8)}</p>
+                                  </div>
                                 </div>
                               </td>
-                              <td className="px-6 py-4 text-right font-black text-slate-900 text-sm">
-                                <span className={entry.type === "outgoing" ? "text-red-600" : ""}>
-                                  {entry.type === "outgoing" ? "-" : "+"}
-                                  {parseInt(entry.quantity).toLocaleString()}
+                              <td className="px-6 py-5 text-right font-bold text-slate-700 text-sm">
+                                <div className="flex flex-col">
+                                  <span className={entry.type === "outgoing" ? "text-red-600" : "text-emerald-600"}>
+                                    {entry.type === "outgoing" ? "-" : "+"}
+                                    {parseInt(entry.quantity).toLocaleString()}
+                                  </span>
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase">{getUnitLabel(entry.unit)}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-5">
+                                <span className={`text-[9px] font-bold px-2 py-1 rounded-md uppercase tracking-tight border ${
+                                  entry.type === "outgoing" ? "bg-red-50 text-red-600 border-red-100" : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                }`}>
+                                  {entry.type === "outgoing" ? "Disbursed" : "Inbound"}
                                 </span>
                               </td>
-                              <td className="px-6 py-4 text-xs font-bold text-slate-500 uppercase">
-                                {getUnitLabel(entry.unit)}
-                              </td>
-                              <td className="px-6 py-4 text-xs font-bold text-slate-600 max-w-[120px] truncate">
+                              <td className="px-6 py-5 text-[10px] font-bold text-slate-500 uppercase max-w-[120px] truncate">
                                 {entry.supplier || (
-                                  <span className="text-slate-300">—</span>
+                                  <span className="text-slate-300 font-normal">Internal Transfer</span>
                                 )}
                               </td>
-                              <td className="px-6 py-4 text-sm font-bold text-slate-700 text-right">
+                              <td className="px-6 py-5 text-sm font-bold text-slate-800 text-right">
                                 {entry.price
                                   ? `₹${parseInt(entry.price).toLocaleString()}`
-                                  : <span className="text-slate-300">—</span>}
+                                  : <span className="text-slate-300 font-normal">N/A</span>}
                               </td>
-                              <td className="px-6 py-4 text-[10px] font-bold text-slate-400">
-                                {formatDate(entry.$createdAt)}
+                              <td className="px-6 py-5">
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-bold text-slate-700">{formatDate(entry.$createdAt)}</span>
+                                  <span className="text-[9px] text-slate-400 font-medium">Recorded by {entry.manager?.split(' ')[0]}</span>
+                                </div>
                               </td>
                             </tr>
                           );

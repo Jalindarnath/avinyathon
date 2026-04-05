@@ -304,17 +304,17 @@ export default function Dashboard() {
             </button>
           )}
           <div className="h-10 w-px bg-slate-200 mx-2" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-bold text-slate-800">{user?.name || 'User'}</p>
               <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
             </div>
             <button 
-              onClick={logout}
-              className="h-10 w-10 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-red-600 hover:border-red-100 hover:bg-red-50 transition-all shadow-sm"
-              title="Logout"
+              onClick={async () => { await logout(); window.location.href = '/login'; }}
+              className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+              title="Sign Out"
             >
-              <LogOut size={16} />
+              <LogOut size={14} /> Sign Out
             </button>
           </div>
         </div>

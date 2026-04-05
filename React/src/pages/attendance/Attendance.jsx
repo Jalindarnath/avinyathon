@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CalendarCheck, Users, HardHat, CheckCircle2, XCircle, Loader2,Clock, Globe, Briefcase, Activity } from 'lucide-react';
+import { CalendarCheck, Users, HardHat, CheckCircle2, XCircle, Loader2,Clock, Globe, Briefcase, Activity ,LogOut} from 'lucide-react';
 import { useSite } from "../../context/SiteContext";
 import { useAuth } from "../../context/AuthContext";
 import { getWorkersBySite, updateWorker } from "../../../appwrite/services/worker.service.js";
@@ -22,9 +22,10 @@ const Attendance = () => {
   const [globalStats, setGlobalStats] = useState([]);
   const [loadingGlobal, setLoadingGlobal] = useState(false);
   
-  // Get today's local date string YYYY-MM-DD
-  const todayObj = new Date();
-  const today = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+  // Calculate Local Day's UTC bounds for precise locking
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString();
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
 
   useEffect(() => {
     fetchData();
@@ -70,8 +71,8 @@ const Attendance = () => {
 
     setLoading(true);
     try {
-      // 1. Fetch today's context
-      const attendanceRes = await getAttendanceBySiteAndDate(selectedSite.$id, today);
+      // 1. Fetch today's context within local midnight bounds
+      const attendanceRes = await getAttendanceBySiteAndDate(selectedSite.$id, startOfDay, endOfDay);
       const recordsMap = {};
       const hasRecords = attendanceRes.documents.length > 0;
       
@@ -118,9 +119,31 @@ const Attendance = () => {
   const handleSubmitAttendance = async () => {
     if (!selectedSite || !user || isLocked) return;
     
-    if (!window.confirm("Submit today's attendance? You cannot edit records once submitted.")) return;
-
     setSubmitting(true);
+    
+    // Fresh check before processing to ensure no one else submitted in the meantime
+    try {
+      const checkRes = await getAttendanceBySiteAndDate(selectedSite.$id, startOfDay, endOfDay);
+      if (checkRes.documents.length > 0) {
+        const recordsMap = {};
+        checkRes.documents.forEach(record => {
+          recordsMap[record.personId] = record;
+        });
+        setDbRecords(recordsMap);
+        setIsLocked(true);
+        setSubmitting(false);
+        alert("Action Aborted: Attendance has already been finalized for today.");
+        return;
+      }
+    } catch (err) {
+      console.error("Verification failed:", err);
+    }
+
+    if (!window.confirm("Submit today's attendance? You cannot edit records once submitted.")) {
+      setSubmitting(false);
+      return;
+    }
+
     try {
       // Batch create all records and update present days
       const promises = personnel.map(async (person) => {
@@ -204,11 +227,18 @@ const Attendance = () => {
                  <CheckCircle2 size={14} /> Records Sealed
               </div>
            )}
-           <div className="flex flex-col items-end px-4 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Current Site</span>
-              <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">
-                 {selectedSite ? (selectedSite.siteName || selectedSite.name) : 'No Site Selected'}
-              </span>
+           <div className="flex items-center gap-4 border-l border-slate-200 pl-4 ml-2">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-slate-800">{user?.name || 'User'}</p>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
+              </div>
+              <button 
+                onClick={async () => { await logout(); window.location.href = '/login'; }}
+                className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+                title="Sign Out"
+              >
+                <LogOut size={14} /> Sign Out
+              </button>
            </div>
         </div>
       </header>
