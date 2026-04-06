@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { managerCreationService } from '../../../appwrite/services/createManager.service.js';
 import { getSites, updateSite } from '../../../appwrite/services/site.service.js';
+import { createManagerRecord } from '../../../appwrite/services/manager.service.js';
 import { useAuth } from '../../context/AuthContext';
+import { Loader2, UserPlus, CheckCircle, AlertCircle } from 'lucide-react';
 
 const CreateManager = () => {
   const [name, setName] = useState('');
@@ -10,8 +12,11 @@ const CreateManager = () => {
   const [siteId, setSiteId] = useState('');
   
   const [availableSites, setAvailableSites] = useState([]);
+  const [allSiteMap, setAllSiteMap] = useState({});
+  const [managers, setManagers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingSites, setLoadingSites] = useState(true);
+  const [loadingManagers, setLoadingManagers] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -19,7 +24,24 @@ const CreateManager = () => {
 
   useEffect(() => {
     fetchAvailableSites();
+    fetchAllManagers();
   }, [user]);
+
+  const fetchAllManagers = async () => {
+    try {
+      setLoadingManagers(true);
+      const res = await managerCreationService.getAllManagers();
+      if (res.success) {
+        setManagers(res.documents);
+      } else {
+        console.error("Failed to fetch managers:", res.error);
+      }
+    } catch (err) {
+      console.error("Failed to fetch managers:", err);
+    } finally {
+      setLoadingManagers(false);
+    }
+  };
 
   const fetchAvailableSites = async () => {
     if (!user || user.role !== 'admin') {
@@ -32,8 +54,17 @@ const CreateManager = () => {
       
       const response = await getSites(user.user?.$id, 'admin');
       
+      const sites = response?.documents || [];
+      
+      // Create a mapping for displaying site names in the managers table
+      const map = {};
+      sites.forEach(site => {
+        map[site.$id] = site.siteName;
+      });
+      setAllSiteMap(map);
+      
       // Filter out sites that don't have a manager assigned
-      const unassignedSites = (response?.documents || []).filter(site => {
+      const unassignedSites = sites.filter(site => {
         // Site is unassigned if manager is null, undefined, or empty string
         return !site.manager || site.manager.trim() === '';
       });
@@ -81,6 +112,9 @@ const CreateManager = () => {
           manager: name
         });
         
+        // Also save to Managers collection
+        await createManagerRecord(email, name, siteId);
+        
         setMessage(`Manager ${name} created successfully and assigned to the selected site`);
         setName('');
         setEmail('');
@@ -88,6 +122,7 @@ const CreateManager = () => {
         
         // Refresh the sites dropdown so the assigned site gets removed
         await fetchAvailableSites();
+        await fetchAllManagers();
       } else {
         setError(result.error || 'Failed to create manager.');
       }
@@ -107,14 +142,14 @@ const CreateManager = () => {
 
       {message && (
         <div className="mb-6 bg-emerald-50 text-emerald-700 p-4 rounded-lg flex items-center gap-3 border border-emerald-100">
-          <span className="material-symbols-outlined">check_circle</span>
+          <CheckCircle className="w-5 h-5 shrink-0" />
           <p className="font-medium">{message}</p>
         </div>
       )}
 
       {error && (
         <div className="mb-6 bg-red-50 text-red-600 p-4 rounded-lg flex items-center gap-3 border border-red-100">
-          <span className="material-symbols-outlined">error</span>
+          <AlertCircle className="w-5 h-5 shrink-0" />
           <p className="font-medium">{error}</p>
         </div>
       )}
@@ -194,18 +229,58 @@ const CreateManager = () => {
           >
             {loading ? (
               <>
-                <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                <Loader2 className="w-5 h-5 animate-spin" />
                 <span>Creating Manager...</span>
               </>
             ) : (
               <>
                 <span>Create Manager Profile</span>
-                <span className="material-symbols-outlined text-[20px]">person_add</span>
+                <UserPlus className="w-5 h-5" />
               </>
             )}
           </button>
         </div>
       </form>
+
+      {/* Managers List Section */}
+      <div className="mt-12 border-t pt-8">
+        <h3 className="text-2xl font-bold text-slate-800 mb-6">Assigned Managers</h3>
+        
+        {loadingManagers ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-[#f2711c]" />
+          </div>
+        ) : managers.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="p-4 text-sm font-semibold text-slate-600">Manager Name</th>
+                  <th className="p-4 text-sm font-semibold text-slate-600">Email</th>
+                  <th className="p-4 text-sm font-semibold text-slate-600">Site Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                {managers.map(manager => (
+                  <tr key={manager.$id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td className="p-4 text-slate-800 font-medium">{manager.manager}</td>
+                    <td className="p-4 text-slate-600">{manager.email}</td>
+                    <td className="p-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#f2711c]/10 text-[#f2711c]">
+                        {allSiteMap[manager.siteId] || manager.siteId || 'None'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-slate-50 rounded-lg border border-slate-200 border-dashed">
+            <p className="text-slate-500">No managers assigned yet.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

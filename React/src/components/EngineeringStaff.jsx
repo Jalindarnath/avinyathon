@@ -103,7 +103,6 @@ export default function EngineeringStaff() {
         name: formData.name,
         role: formData.role || null,
         // Send both to avoid breaking other parts of the app
-        salary: Number(formData.salary),
         monthlySalary: Number(formData.salary),
         siteId: selectedSite.$id,
         manager: user?.name || "Admin",
@@ -163,7 +162,7 @@ export default function EngineeringStaff() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setFormData({ name: "", role: "", salary: 75000 });
+    setFormData({ name: "", role: "", monthlySalary: 75000 });
   };
 
   return (

@@ -1,4 +1,4 @@
-import { Client, Users, ID } from 'node-appwrite';
+import { Client, Users, ID, Query } from 'node-appwrite';
 
 // Initialize the Server SDK
 const client = new Client()
@@ -40,6 +40,36 @@ export const managerCreationService = {
         } catch (error) {
             console.error("Manager Creation Error:", error.message);
             return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Fetches all users from Auth collection who have 'manager' role in preferences or 'manager' label
+     */
+    async getAllManagers() {
+        try {
+            // Fetch users (up to 100 for now, could be paginated if needed)
+            const response = await users.list([
+                Query.limit(100),
+                Query.orderDesc('$createdAt')
+            ]);
+            
+            // Filter managers: those with 'manager' label OR role: 'manager' in prefs
+            const authManagers = response.users.filter(user => {
+                const hasLabel = user.labels && user.labels.includes('manager');
+                const hasRole = user.prefs && user.prefs.role === 'manager';
+                return hasLabel || hasRole;
+            }).map(user => ({
+                $id: user.$id,
+                manager: user.name,
+                email: user.email,
+                siteId: (user.prefs && user.prefs.siteId) ? user.prefs.siteId : 'N/A'
+            }));
+
+            return { success: true, documents: authManagers };
+        } catch (error) {
+            console.error("Manager Fetching Error:", error.message);
+            return { success: false, documents: [], error: error.message };
         }
     }
 };

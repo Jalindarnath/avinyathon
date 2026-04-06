@@ -11,19 +11,16 @@ export const addAttendance = async (data) => {
   );
 };
 
-// Get Attendance for a specific site and date
-export const getAttendanceBySiteAndDate = async (siteId, dateString) => {
-  // dateString should be YYYY-MM-DD
-  const startDate = `${dateString}T00:00:00.000Z`;
-  const endDate = `${dateString}T23:59:59.999Z`;
-
+// Get Attendance for a specific site and date range
+export const getAttendanceBySiteAndDate = async (siteId, startDate, endDate) => {
   return databases.listDocuments(
     DATABASE_ID,
     COLLECTIONS.ATTENDANCE,
     [
       Query.equal("siteId", siteId),
       Query.greaterThanEqual("date", startDate),
-      Query.lessThanEqual("date", endDate)
+      Query.lessThanEqual("date", endDate),
+      Query.limit(100)
     ]
   );
 };

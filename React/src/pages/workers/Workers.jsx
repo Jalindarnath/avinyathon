@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Pencil, Trash2, Users, X, Loader2, ChevronLeft, ChevronRight, Wallet, BadgeInfo, HardHat } from 'lucide-react';
+import { UserPlus, Pencil, Trash2, Users, X, Loader2, ChevronLeft, ChevronRight, Wallet, BadgeInfo, HardHat ,LogOut} from 'lucide-react';
 import { addWorker, getWorkersBySite, updateWorker, deleteWorker, getPaginatedWorkers } from "../../../appwrite/services/worker.service.js";
 import { createPayment } from "../../../appwrite/services/payment.service.js";
 import { updateLaborCost } from "../../../appwrite/services/finance.service.js";
@@ -192,11 +192,18 @@ const Workers = () => {
                 <UserPlus size={16} /> Register Laborer
               </button>
            )}
-           <div className="flex flex-col items-end px-4 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Current Context</span>
-              <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">
-                 {isAdmin ? 'Global Administration' : (selectedSite ? (selectedSite.siteName || selectedSite.name) : 'No Site Selected')}
-              </span>
+           <div className="flex items-center gap-4 border-l border-slate-200 pl-4 ml-2">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-slate-800">{user?.name || 'User'}</p>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
+              </div>
+              <button 
+                onClick={async () => { await logout(); window.location.href = '/login'; }}
+                className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+                title="Sign Out"
+              >
+                <LogOut size={14} /> Sign Out
+              </button>
            </div>
         </div>
       </header>

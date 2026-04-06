@@ -13,11 +13,11 @@ export const createPayment = async (data) => {
 
 // Get All Payments (Admin)
 export const getAllPayments = async () => {
-    return await databases.listDocuments(
-        DATABASE_ID,
-        COLLECTIONS.PAYMENTS,
-        [Query.limit(100), Query.orderDesc("$createdAt")]
-    );
+  return await databases.listDocuments(
+    DATABASE_ID,
+    COLLECTIONS.PAYMENTS,
+    [Query.limit(100), Query.orderDesc("$createdAt")]
+  );
 };
 
 //  Get Payments by Site

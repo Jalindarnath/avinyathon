@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CreditCard, IndianRupee, Users, HardHat, CheckCircle, MinusCircle, History, Wallet, WalletCards, ArrowDownRight, BadgeInfo, Loader2 } from "lucide-react";
+import { CreditCard, IndianRupee, Users, HardHat, CheckCircle, MinusCircle, History, Wallet, WalletCards, ArrowDownRight, BadgeInfo, Loader2,LogOut } from "lucide-react";
 import { useSite } from "../../context/SiteContext";
 import { useAuth } from "../../context/AuthContext";
 import { getWorkersBySite, updateWorker } from "../../../appwrite/services/worker.service.js";
@@ -63,7 +63,7 @@ const Payments = () => {
       workers.sort((a, b) => b.presentDays - a.presentDays);
 
       const engineers = (engineersRes.documents || []).map(e => {
-        const salary = e.salary || 0;
+        const salary = e.monthlySalary || e.salary || 0;
         const deductions = e.deductedAmt || 0;
         return {
           ...e,
@@ -76,13 +76,15 @@ const Payments = () => {
 
       setPersonnel([...engineers, ...workers]);
 
-      // Fetch history if admin or someone wants to see it
-      if (isAdmin) {
+      // Fetch history based on role and context
+      if (isAdmin && !selectedSite) {
          const histRes = await getAllPayments();
          setPaymentHistory(histRes.documents || []);
       } else if (selectedSite) {
          const histRes = await getPaymentsBySite(selectedSite.$id);
          setPaymentHistory(histRes.documents || []);
+      } else {
+         setPaymentHistory([]);
       }
     } catch (err) {
       console.error("Failed to fetch payment data:", err);
@@ -195,11 +197,18 @@ const Payments = () => {
                  <BadgeInfo size={14} /> Salaries Locked
               </div>
            )}
-           <div className="flex flex-col items-end px-4 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm">
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Current Balance Context</span>
-              <span className="text-xs font-bold text-[#f2711c] truncate max-w-[150px]">
-                 {isAdmin ? 'Global Ledger' : (selectedSite ? (selectedSite.siteName || selectedSite.name) : 'No Site Selected')}
-              </span>
+           <div className="flex items-center gap-4 border-l border-slate-200 pl-4 ml-2">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-slate-800">{user?.name || 'User'}</p>
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
+              </div>
+              <button 
+                onClick={async () => { await logout(); window.location.href = '/login'; }}
+                className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+                title="Sign Out"
+              >
+                <LogOut size={14} /> Sign Out
+              </button>
            </div>
         </div>
       </header>
@@ -445,7 +454,9 @@ const Payments = () => {
                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                           <div className="px-5 py-4 bg-slate-50 border-b border-slate-100 flex items-center gap-3">
                              <History size={16} className="text-blue-600" />
-                             <h4 className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Global Disbursement Log</h4>
+                             <h4 className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">
+                                {isAdmin && !selectedSite ? 'Global Disbursement Log' : 'Site Disbursement Log'}
+                             </h4>
                           </div>
                           <table className="w-full text-left">
                              <thead className="bg-white border-b border-slate-100 italic-none">
