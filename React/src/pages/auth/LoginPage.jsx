@@ -163,6 +163,15 @@ const LoginPage = () => {
             </form>
           </div>
 
+          {/* Testing Credentials Box */}
+          <div className="w-full max-w-md mt-6 bg-red-50 border border-red-200 p-4 rounded-xl shadow-sm">
+            <h4 className="text-red-600 font-bold text-sm mb-2 uppercase tracking-wide">Testing purpose only</h4>
+            <div className="space-y-2 text-sm text-red-800">
+              <p><strong>Admin ID:</strong> admin@samarthdev.com <br /> <strong>Password:</strong> admin@#$</p>
+              <p><strong>Manager ID:</strong> mgsumit@dev.com <br /> <strong>Password:</strong> managersumit123</p>
+            </div>
+          </div>
+
           {/* Footer */}
           <div className="mt-auto pt-8 flex gap-6 text-[10px] text-[#8c7265] uppercase tracking-widest font-bold">
             <a href="#" className="hover:text-[#9e4300]">Privacy Protocol</a>
