@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Building2, Users, Wallet, CreditCard, LogOut, BarChart3, Plus, IndianRupee, PieChart, Briefcase, Settings2, Save, Minus, Pencil, Trash2, X, Loader2, ChevronLeft, ChevronRight, HardHat } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from "../context/AuthContext";
@@ -13,6 +14,7 @@ import { addEngineer, updateEngineer, deleteEngineer, getPaginatedEngineers } fr
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { selectedSite, sites } = useSite();
 
   const [finance, setFinance] = useState(null);
@@ -310,7 +312,7 @@ export default function Dashboard() {
               <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
             </div>
             <button 
-              onClick={() => window.location.href = '/logout'}
+              onClick={() => navigate('/logout')}
               className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
               title="Sign Out"
             >

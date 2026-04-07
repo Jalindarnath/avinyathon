@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from "react";
 import { CreditCard, IndianRupee, Users, HardHat, CheckCircle, MinusCircle, History, Wallet, WalletCards, ArrowDownRight, BadgeInfo, Loader2,LogOut } from "lucide-react";
 import { useSite } from "../../context/SiteContext";
@@ -12,6 +13,7 @@ import { getAllEngineers } from "../../../appwrite/services/engineer.service.js"
 const Payments = () => {
   const { selectedSite } = useSite();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
   const [activeTab, setActiveTab] = useState(isAdmin ? 'history' : 'payouts');
   const [personnel, setPersonnel] = useState([]);
@@ -203,7 +205,7 @@ const Payments = () => {
                 <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
               </div>
               <button 
-                onClick={() => window.location.href = '/logout'}
+                onClick={() => navigate('/logout')}
                 className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
                 title="Sign Out"
               >

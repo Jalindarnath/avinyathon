@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from "react";
 import { CalendarCheck, Users, HardHat, CheckCircle2, XCircle, Loader2,Clock, Globe, Briefcase, Activity ,LogOut} from 'lucide-react';
 import { useSite } from "../../context/SiteContext";
@@ -9,6 +10,7 @@ import { addAttendance, updateAttendance, getAttendanceBySiteAndDate, getAttenda
 const Attendance = () => {
   const { selectedSite, sites } = useSite();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
   
   const [personnel, setPersonnel] = useState([]);
@@ -233,7 +235,7 @@ const Attendance = () => {
                 <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
               </div>
               <button 
-                onClick={() => window.location.href = '/logout'}
+                onClick={() => navigate('/logout')}
                 className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
                 title="Sign Out"
               >

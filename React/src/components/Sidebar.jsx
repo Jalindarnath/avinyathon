@@ -29,7 +29,7 @@ export default function Sidebar() {
   };
 
   const handleLogout = () => {
-    window.location.href = '/logout';
+    navigate('/logout');
   };
 
   return (

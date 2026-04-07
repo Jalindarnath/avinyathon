@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { UserPlus, Pencil, Trash2, Users, X, Loader2, ChevronLeft, ChevronRight, Wallet, BadgeInfo, HardHat ,LogOut} from 'lucide-react';
 import { addWorker, getWorkersBySite, updateWorker, deleteWorker, getPaginatedWorkers } from "../../../appwrite/services/worker.service.js";
@@ -9,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 const Workers = () => {
   const { selectedSite } = useSite();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
 
   const [workers, setWorkers] = useState([]);
@@ -198,7 +200,7 @@ const Workers = () => {
                 <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{isAdmin ? 'System Admin' : 'Site Manager'}</p>
               </div>
               <button 
-                onClick={() => window.location.href = '/logout'}
+                onClick={() => navigate('/logout')}
                 className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
                 title="Sign Out"
               >

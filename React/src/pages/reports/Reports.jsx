@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from "react";
 import {
   BarChart3,
@@ -106,6 +107,7 @@ const SectionHeader = ({ icon: Icon, title, subtitle, iconBg = "bg-slate-100", i
 export default function Reports() {
   const { selectedSite } = useSite();
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [finance, setFinance] = useState(null);
@@ -257,7 +259,7 @@ export default function Reports() {
                 <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{user?.role === 'admin' ? 'System Admin' : 'Site Manager'}</p>
               </div>
               <button 
-                onClick={() => window.location.href = '/logout'}
+                onClick={() => navigate('/logout')}
                 className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
                 title="Sign Out"
               >
