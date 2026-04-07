@@ -258,13 +258,7 @@ export default function Reports() {
                 <p className="text-sm font-bold text-slate-800">{user?.name || 'User'}</p>
                 <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">{user?.role === 'admin' ? 'System Admin' : 'Site Manager'}</p>
               </div>
-              <button 
-                onClick={() => navigate('/logout')}
-                className="bg-white border border-slate-200 text-slate-800 hover:text-red-700 hover:bg-red-50 hover:border-red-100 text-xs font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
-                title="Sign Out"
-              >
-                <LogOut size={14} /> Sign Out
-              </button>
+
             </div>
           </div>
         </header>
